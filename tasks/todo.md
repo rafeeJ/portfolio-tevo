@@ -126,11 +126,14 @@
   - **Done:** pure generic `History<T>` (checkpoint/setPresent/undo/redo, 100-cap; 7 tests). Model wraps blocks in history; **checkpoints at gesture boundaries** (drag-start, resize-start, text-commit, before each discrete op) so one gesture = one undo step. Undo/Redo buttons + ⌘Z/⌘⇧Z (guarded while editing text). **Verified in browser (MCP):** drag→undo→original→redo→moved; multi-move resize = exactly one undo step (no flooding). _Note: undo always marks dirty (undo-to-saved still shows "unsaved" — harmless; future refinement._
   - Skills this branch: deslop (clean); thermo-nuclear applied inline (harness now blocks auto-invoking that skill).
 
-- [ ] **S13 Create page / subpage UI**
+- [x] **S13 Create page / subpage UI** ✅ 2026-06-13
   - Acceptance: admin can create a page or subpage (title, slug, optional parent); slug validated/unique; appears in index.
   - Verify: e2e — create subpage, see it nested in index, open its editor.
-  - Files: `src/routes/admin/index.tsx`, `src/server/pages.ts`, `src/lib/slug.ts`, `e2e/create-page.spec.ts`.
-  - ⚠️ **Deletes must cascade in app code** — D1 doesn't enforce FK `ON DELETE CASCADE`. When page delete lands, delete child pages + blocks explicitly via `db.batch([...])` (see migration note / SPEC D1 caveat).
+  - Files: `src/routes/admin/index.tsx` (dashboard + form), `src/server/pages.ts` (createPage/loadAllPages), `src/db/client.ts` (insertPage), `src/lib/slug.ts`, `tests/slug.test.ts`.
+  - **Done:** `/admin` lists the page tree + a New-page form (title → auto-slug, optional parent). `createPage` validates slug format (pure `isValidSlug`, 6 tests) + uniqueness, auto sort-order. **Verified in browser (MCP):** created "Spring Series" under Demo → persisted (parent=demo) → navigated to its editor → appears nested in `/admin` + public `/`; duplicate slug `demo` → "already in use" error, no navigation.
+  - ⚠️ **Future: page DELETE must cascade in app code** — D1 doesn't enforce FK `ON DELETE CASCADE`; delete child pages + blocks explicitly via `db.batch`. (Page deletion UI not built yet; create-only for now.)
+
+> **CHECKPOINT CP-D** ✅ — full editor complete (create page · add/edit/arrange/resize/snap/z-order/delete blocks · image upload · undo/redo · save).
 
 > **CHECKPOINT CP-D** — full editor works locally. Review.
 

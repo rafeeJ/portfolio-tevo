@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ImgImageIdRouteImport } from './routes/img.$imageId'
 import { Route as AdminPIdRouteImport } from './routes/admin/p.$id'
@@ -23,6 +24,11 @@ const AboutRoute = AboutRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PSlugRoute = PSlugRouteImport.update({
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/about': typeof AboutRoute
   '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
 export interface FileRoutesByTo {
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/about': typeof AboutRoute
   '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
+  '/admin': typeof AdminIndexRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
 export interface FileRoutesById {
@@ -61,19 +69,27 @@ export interface FileRoutesById {
   '/about': typeof AboutRoute
   '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
+  '/admin/': typeof AdminIndexRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/img/$imageId' | '/p/$slug' | '/admin/p/$id'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/img/$imageId'
+    | '/p/$slug'
+    | '/admin/'
+    | '/admin/p/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/img/$imageId' | '/p/$slug' | '/admin/p/$id'
+  to: '/' | '/about' | '/img/$imageId' | '/p/$slug' | '/admin' | '/admin/p/$id'
   id:
     | '__root__'
     | '/'
     | '/about'
     | '/img/$imageId'
     | '/p/$slug'
+    | '/admin/'
     | '/admin/p/$id'
   fileRoutesById: FileRoutesById
 }
@@ -82,6 +98,7 @@ export interface RootRouteChildren {
   AboutRoute: typeof AboutRoute
   ImgImageIdRoute: typeof ImgImageIdRoute
   PSlugRoute: typeof PSlugRoute
+  AdminIndexRoute: typeof AdminIndexRoute
   AdminPIdRoute: typeof AdminPIdRoute
 }
 
@@ -99,6 +116,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/p/$slug': {
@@ -130,6 +154,7 @@ const rootRouteChildren: RootRouteChildren = {
   AboutRoute: AboutRoute,
   ImgImageIdRoute: ImgImageIdRoute,
   PSlugRoute: PSlugRoute,
+  AdminIndexRoute: AdminIndexRoute,
   AdminPIdRoute: AdminPIdRoute,
 }
 export const routeTree = rootRouteImport
