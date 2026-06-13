@@ -120,6 +120,8 @@ CREATE TABLE images (
 
 Constants: `CANVAS_WIDTH = 1440` (desktop design width). Blocks position against this; the public renderer scales the canvas to the viewport.
 
+> **D1 caveat — no runtime FK enforcement.** D1 does not enforce foreign keys (no persistent `PRAGMA foreign_keys = ON`), so the `ON DELETE CASCADE` clauses above will **not** fire. Deletes that should cascade (page → blocks, page → child pages, image → blocks) must be done explicitly and atomically in app code via `db.batch([...])`. The FK declarations stay as intent/documentation.
+
 ## Hard Part 1 — The Canvas Editor
 
 The bulk of the work. Requirements:

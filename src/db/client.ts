@@ -4,17 +4,14 @@
 
 import type { BlockRow, PageRow } from "./schema";
 
-/** All pages, ordered for tree assembly (top-level first, then by sort_order). */
+/** All pages in deterministic order; the caller groups by parent_id to build the tree. */
 export async function listPages(db: D1Database): Promise<PageRow[]> {
   const res = await db
-    .prepare(
-      "SELECT * FROM pages ORDER BY parent_id IS NOT NULL, parent_id, sort_order",
-    )
+    .prepare("SELECT * FROM pages ORDER BY sort_order, id")
     .all<PageRow>();
   return res.results;
 }
 
-/** A single page by slug, or null. */
 export async function getPageBySlug(
   db: D1Database,
   slug: string,

@@ -1,5 +1,11 @@
 -- 0001_init.sql — initial schema for Tevo photo portfolio
 -- See docs/SPEC.md "Data Model (D1)". IDs are app-generated (nanoid); timestamps are epoch ms.
+--
+-- IMPORTANT (D1): foreign keys are NOT enforced at runtime — D1 has no persistent
+-- `PRAGMA foreign_keys = ON`. The FK + ON DELETE CASCADE clauses below document intent
+-- and behave under a FK-enabled SQLite, but DO NOT rely on cascade in D1. Cascading
+-- deletes (page -> blocks, page -> child pages, image -> blocks) MUST be performed
+-- explicitly and atomically in app code via db.batch([...]). See S13 in tasks/todo.md.
 
 -- pages: tree via parent_id; ordered within a parent by sort_order
 CREATE TABLE pages (
