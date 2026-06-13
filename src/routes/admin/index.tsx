@@ -5,9 +5,10 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { useState } from "react";
-import { buildTree, type TreeNode } from "../../lib/tree";
+import { createPage } from "../../lib/admin-api";
 import { slugify } from "../../lib/slug";
-import { createPage, loadAllPages } from "../../server/pages";
+import { buildTree, type TreeNode } from "../../lib/tree";
+import { loadAllPages } from "../../server/pages";
 
 export const Route = createFileRoute("/admin/")({
   loader: () => loadAllPages(),
@@ -37,9 +38,7 @@ function AdminIndex() {
     setError(null);
     setCreating(true);
     try {
-      const { id } = await createPage({
-        data: { title, slug, parentId: parentId || null },
-      });
+      const { id } = await createPage({ title, slug, parentId: parentId || null });
       await router.invalidate();
       navigate({ to: "/admin/p/$id", params: { id } });
     } catch (err) {

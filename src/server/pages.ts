@@ -64,29 +64,32 @@ export interface CreatePageInput {
   parentId: string | null;
 }
 
-/** Create a page or subpage (admin). Validates slug format + uniqueness. */
-export const createPage = createServerFn({ method: "POST" })
-  .validator((data: CreatePageInput): CreatePageInput => {
-    const title = typeof data?.title === "string" ? data.title.trim() : "";
-    if (!title) throw new Error("Title is required");
-    if (!isValidSlug(data?.slug)) throw new Error("Invalid slug");
-    return { title, slug: data.slug, parentId: data.parentId || null };
-  })
-  .handler(async ({ data }): Promise<{ id: string }> => {
-    const db = getDb();
-    if (await getPageBySlug(db, data.slug)) {
-      throw new Error(`Slug "${data.slug}" is already in use`);
-    }
-    const id = crypto.randomUUID();
-    const now = Date.now();
-    await insertPage(db, {
-      id,
-      parent_id: data.parentId,
-      slug: data.slug,
-      title: data.title,
-      published: 1,
-      created_at: now,
-      updated_at: now,
-    });
-    return { id };
+// Create-page is a mutation: its HTTP entry point is the Access-gated
+// POST /admin/api/create-page route. Validation + insert live here.
+export function validateCreateInput(data: CreatePageInput): CreatePageInput {
+  const title = typeof data?.title === "string" ? data.title.trim() : "";
+  if (!title) throw new Error("Title is required");
+  if (!isValidSlug(data?.slug)) throw new Error("Invalid slug");
+  return { title, slug: data.slug, parentId: data.parentId || null };
+}
+
+export async function applyCreatePage(
+  db: D1Database,
+  data: CreatePageInput,
+): Promise<{ id: string }> {
+  if (await getPageBySlug(db, data.slug)) {
+    throw new Error(`Slug "${data.slug}" is already in use`);
+  }
+  const id = crypto.randomUUID();
+  const now = Date.now();
+  await insertPage(db, {
+    id,
+    parent_id: data.parentId,
+    slug: data.slug,
+    title: data.title,
+    published: 1,
+    created_at: now,
+    updated_at: now,
   });
+  return { id };
+}

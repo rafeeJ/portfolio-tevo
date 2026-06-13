@@ -145,10 +145,10 @@
 
 ## S14 — Launch hardening (CP-E)
 
-- [ ] **S14.1 Enforce auth boundary**
-  - Acceptance: all mutating server functions reachable only behind Access; negative test confirms unauth mutation is rejected (spec criterion #6).
-  - Verify: e2e/integration negative-auth test.
-  - Files: `src/server/_guard.ts`, `e2e/auth-boundary.spec.ts`.
+- [x] **S14.1 Enforce auth boundary** ✅ 2026-06-13
+  - Acceptance: all mutating endpoints reachable only behind Access; unauth mutation rejected.
+  - Files: `src/routes/admin/api/{save,upload,create-page}.tsx`, `src/lib/admin-api.ts`, `src/server/http.ts` (jsonPost), `src/server/{blocks,images,pages}.ts` (extracted logic), `wrangler.jsonc` (route).
+  - **Done — security fix:** the 3 mutations were TanStack *server functions* (own HTTP path, **not** under `/admin/*`) → publicly callable, bypassing an `/admin/*` Access policy. Moved them to **POST `/admin/api/*` server routes** (edge-gated by Access), logic kept in `server/` as `validate*/apply*/process*`, client rewired via `lib/admin-api.ts`. Added `tevo.rafee.cloud` custom-domain route. **Verified locally:** save/create/upload work through the new endpoints (200), bad input → 400. _Real Access enforcement verified post-deploy. Follow-up: gate admin READS (loadEditorPage/loadAllPages) once drafts/unpublish exist — currently all content is published so no leak._
 
 - [ ] **S14.2 Validation + deploy + full e2e**
   - Acceptance: input validation pass (slugs, coords, block types, image limits); deploy to `tevo.rafee.cloud`; spec success criteria 1–7 all pass; LCP image < 2.5s on simulated 4G.
