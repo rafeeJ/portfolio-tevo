@@ -66,7 +66,7 @@ function Editor() {
         <EditorCanvas
           blocks={model.blocks}
           resolveImage={pipelineImageResolver}
-          onMove={model.setPosition}
+          onUpdate={model.updateBlock}
         />
       </div>
     </div>

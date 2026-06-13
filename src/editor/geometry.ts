@@ -45,3 +45,71 @@ export function applyDrag(
   const d = toCanvasDelta(screenDx, screenDy, scale);
   return clampPosition(block.x + d.x, block.y + d.y, block, canvasH);
 }
+
+export type Corner = "nw" | "ne" | "sw" | "se";
+export const MIN_BLOCK_SIZE = 24;
+
+export interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/** The corner that stays fixed while the opposite corner is dragged. */
+function anchorOf(block: Block, corner: Corner): Point {
+  const east = corner.includes("e");
+  const south = corner.includes("s");
+  return {
+    x: east ? block.x : block.x + block.width,
+    y: south ? block.y : block.y + block.height,
+  };
+}
+
+/**
+ * Resize a block by dragging a corner handle. The opposite corner is anchored.
+ * `lockAspect` (images) drives height from width to preserve the original ratio.
+ * Result is min-sized, clamped within the canvas, and integer-rounded.
+ */
+export function resizeBlock(
+  block: Block,
+  corner: Corner,
+  screenDx: number,
+  screenDy: number,
+  scale: number,
+  canvasH: number,
+  lockAspect: boolean,
+): Box {
+  const d = toCanvasDelta(screenDx, screenDy, scale);
+  const anchor = anchorOf(block, corner);
+  const east = corner.includes("e");
+  const south = corner.includes("s");
+  const draggedX = (east ? block.x + block.width : block.x) + d.x;
+  const draggedY = (south ? block.y + block.height : block.y) + d.y;
+
+  const aspect = block.width / block.height;
+  let width = Math.max(MIN_BLOCK_SIZE, Math.abs(draggedX - anchor.x));
+  let height = lockAspect
+    ? width / aspect
+    : Math.max(MIN_BLOCK_SIZE, Math.abs(draggedY - anchor.y));
+
+  let x = east ? anchor.x : anchor.x - width;
+  let y = south ? anchor.y : anchor.y - height;
+
+  // Keep the box on-canvas; shrink (preserving aspect when locked) if it spills.
+  x = Math.max(0, x);
+  y = Math.max(0, y);
+  width = Math.min(width, CANVAS_WIDTH - x);
+  height = Math.min(height, canvasH - y);
+  if (lockAspect) {
+    if (width / height > aspect) width = height * aspect;
+    else height = width / aspect;
+  }
+
+  return {
+    x: Math.round(x),
+    y: Math.round(y),
+    width: Math.round(Math.max(MIN_BLOCK_SIZE, width)),
+    height: Math.round(Math.max(MIN_BLOCK_SIZE, height)),
+  };
+}

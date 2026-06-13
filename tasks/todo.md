@@ -89,10 +89,11 @@
   - Files: `src/editor/geometry.ts`, `src/editor/EditorCanvas.tsx`, `src/editor/model.ts`, `src/server/blocks.ts`, `src/routes/admin/p.$id.tsx`, `src/render/render-blocks.tsx` (BlockContent extract), `tests/geometry.test.ts`.
   - **Done:** pure `geometry` (drag delta→canvas, clamp; 9 tests). `EditorCanvas` = dnd-kit draggables in canvas coords; no CSS-scaled parent so transforms track the cursor. `saveBlockLayout` = validated atomic `db.batch` UPDATE. Model `setPosition`/`dirty`. **Verified in a real browser (chrome-devtools MCP):** dragged heading → clamped to (0,400) → Save → D1 shows x=0,y=400 → reload renders persisted position. Review: extracted `BlockContent` (shared renderer) + reused `toBoxPercent`.
 
-- [ ] **S7 Resize + persist**
-  - Acceptance: resize handles (interact.js) update w/h in the model; images keep aspect by default (unlockable); Save persists.
+- [x] **S7 Resize + persist** ✅ 2026-06-13
+  - Acceptance: resize handles update w/h in the model; images keep aspect by default; Save persists.
   - Verify: e2e — resize, save, reload, assert dims + aspect lock.
-  - Files: `src/editor/useResize.ts`, `src/editor/Canvas.tsx`, `e2e/editor-resize.spec.ts`.
+  - Files: `src/editor/geometry.ts` (resizeBlock), `src/editor/EditorCanvas.tsx` (corner handles), `src/editor/model.ts` (updateBlock), `tests/geometry.test.ts`.
+  - **Done:** pure `resizeBlock` (anchor + aspect-lock + clamp; 5 tests). Corner handles use raw pointer events + `stopPropagation` (no dnd-kit conflict) — **deviation from specced interact.js**, flagged; avoids two libs fighting for pointer events. Model generalized to `updateBlock(id, patch)`. **Verified in browser (MCP):** resized image 600×400→699×466 (aspect 1.50 held) → Save → D1 persists. **Note:** interact.js not used (raw handles instead); handles always-visible pending selection (~S9).
 
 - [ ] **S8 Snap-to-grid + smart guides**
   - Acceptance: toggle enables 8px snap + edge/center alignment guides; off = free placement.

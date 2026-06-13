@@ -38,7 +38,7 @@ Notes:
 - **Blobs:** Cloudflare **R2** — original high-res uploads, **admin-only** (never served to public). Bound as `BUCKET`.
 - **Image delivery:** Cloudflare **Image Resizing** via `/cdn-cgi/image/` — resized AVIF/WebP variants, edge-cached. Public pages only ever get variants.
 - **Auth:** **Cloudflare Access** (Zero Trust) gates `/admin/*` + all mutating endpoints. No in-app auth code.
-- **Canvas:** `dnd-kit` (drag) + `interact.js` (resize/snap) over an **app-owned layout model** (React state is the single source of truth; the DOM is never authoritative).
+- **Canvas:** `dnd-kit` (drag) + **raw pointer-event corner handles** (resize) over an **app-owned layout model** (React state is the single source of truth; the DOM is never authoritative). All coordinate math lives in the pure, unit-tested `src/editor/geometry.ts`. _(Spec named interact.js for resize/snap; we use raw handles instead to avoid two libraries competing for the same pointer events — see S7.)_
 - **Host:** `tevo.rafee.cloud` (subdomain of the existing Cloudflare zone `rafee.cloud`).
 
 ## ⚠️ Use the Cloudflare skills — don't guess
