@@ -3,6 +3,7 @@ import {
   applyDrag,
   clampPosition,
   editorCanvasHeight,
+  resizeBlock,
   toCanvasDelta,
 } from "../src/editor/geometry";
 import type { Block } from "../src/lib/types";
@@ -47,6 +48,51 @@ describe("applyDrag", () => {
   });
   it("clamps the result within the canvas", () => {
     expect(applyDrag(b({ x: 1200 }), 1000, 0, 1, 2000)).toEqual({ x: 1240, y: 100 });
+  });
+});
+
+describe("resizeBlock", () => {
+  const img = b({ x: 100, y: 100, width: 200, height: 100 }); // aspect 2:1
+
+  it("se corner grows width/height, anchored at top-left (no aspect lock)", () => {
+    // scale 1, drag se by (+100, +50): w 200->300, h 100->150, x/y fixed
+    expect(resizeBlock(img, "se", 100, 50, 1, 2000, false)).toEqual({
+      x: 100,
+      y: 100,
+      width: 300,
+      height: 150,
+    });
+  });
+
+  it("locks aspect for images (height follows width)", () => {
+    // se +100 width -> 300; aspect 2:1 -> height 150
+    expect(resizeBlock(img, "se", 100, 0, 1, 2000, true)).toEqual({
+      x: 100,
+      y: 100,
+      width: 300,
+      height: 150,
+    });
+  });
+
+  it("nw corner moves the origin and resizes, anchored at bottom-right", () => {
+    // anchor = (300,200). drag nw by (-50,-25): new x=50,y=75,w=250,h=125
+    expect(resizeBlock(img, "nw", -50, -25, 1, 2000, false)).toEqual({
+      x: 50,
+      y: 75,
+      width: 250,
+      height: 125,
+    });
+  });
+
+  it("enforces a minimum size", () => {
+    const r = resizeBlock(img, "se", -1000, -1000, 1, 2000, false);
+    expect(r.width).toBeGreaterThanOrEqual(24);
+    expect(r.height).toBeGreaterThanOrEqual(24);
+  });
+
+  it("applies the screen->canvas scale to the delta", () => {
+    // scale 0.5 -> screen +50 = canvas +100 width
+    expect(resizeBlock(img, "se", 50, 0, 0.5, 2000, false).width).toBe(300);
   });
 });
 

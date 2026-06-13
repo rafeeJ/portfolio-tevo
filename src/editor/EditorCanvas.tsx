@@ -1,7 +1,8 @@
-// Interactive editor canvas. Blocks are dnd-kit draggables positioned in canvas
-// coordinates (% of the canvas box); on drop, the screen-space delta is converted
-// to canvas coordinates (geometry.applyDrag) and pushed to the model. The canvas
-// itself is never CSS-scaled, so dnd-kit's screen-px transform tracks the cursor.
+// Interactive editor canvas. Block bodies are dnd-kit draggables; corner handles
+// resize via raw pointer events (stopPropagation keeps dnd-kit from also dragging).
+// Everything is positioned in canvas coordinates (% of the canvas box); the canvas
+// is never CSS-scaled, so dnd-kit's screen-px transform tracks the cursor. Screen
+// deltas convert to canvas coords through ./geometry.
 import {
   DndContext,
   PointerSensor,
@@ -14,15 +15,23 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { CANVAS_WIDTH, type Block } from "../lib/types";
 import { BlockContent, type ResolvedImage } from "../render/render-blocks";
 import { toBoxPercent } from "../render/scale";
-import { applyDrag, editorCanvasHeight } from "./geometry";
+import {
+  applyDrag,
+  editorCanvasHeight,
+  resizeBlock,
+  type Box,
+  type Corner,
+} from "./geometry";
+
+const CORNERS: Corner[] = ["nw", "ne", "sw", "se"];
 
 export interface EditorCanvasProps {
   blocks: Block[];
   resolveImage?: (imageId: string) => ResolvedImage;
-  onMove: (id: string, x: number, y: number) => void;
+  onUpdate: (id: string, patch: Partial<Block>) => void;
 }
 
-export function EditorCanvas({ blocks, resolveImage, onMove }: EditorCanvasProps) {
+export function EditorCanvas({ blocks, resolveImage, onUpdate }: EditorCanvasProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(CANVAS_WIDTH);
   useEffect(() => {
@@ -43,8 +52,7 @@ export function EditorCanvas({ blocks, resolveImage, onMove }: EditorCanvasProps
   const handleDragEnd = (event: DragEndEvent) => {
     const block = blocks.find((b) => b.id === event.active.id);
     if (!block) return;
-    const next = applyDrag(block, event.delta.x, event.delta.y, scale, canvasH);
-    onMove(block.id, next.x, next.y);
+    onUpdate(block.id, applyDrag(block, event.delta.x, event.delta.y, scale, canvasH));
   };
 
   return (
@@ -63,7 +71,9 @@ export function EditorCanvas({ blocks, resolveImage, onMove }: EditorCanvasProps
             key={block.id}
             block={block}
             canvasH={canvasH}
+            scale={scale}
             resolveImage={resolveImage}
+            onUpdate={onUpdate}
           />
         ))}
       </DndContext>
@@ -74,11 +84,15 @@ export function EditorCanvas({ blocks, resolveImage, onMove }: EditorCanvasProps
 function DraggableBlock({
   block,
   canvasH,
+  scale,
   resolveImage,
+  onUpdate,
 }: {
   block: Block;
   canvasH: number;
+  scale: number;
   resolveImage?: (imageId: string) => ResolvedImage;
+  onUpdate: (id: string, patch: Partial<Block>) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block.id,
@@ -107,6 +121,78 @@ function DraggableBlock({
       {...attributes}
     >
       <BlockContent block={block} resolveImage={resolveImage} sizes="40vw" />
+      {CORNERS.map((corner) => (
+        <ResizeHandle
+          key={corner}
+          corner={corner}
+          block={block}
+          scale={scale}
+          canvasH={canvasH}
+          onResize={(b) => onUpdate(block.id, b)}
+        />
+      ))}
     </div>
   );
+}
+
+function ResizeHandle({
+  corner,
+  block,
+  scale,
+  canvasH,
+  onResize,
+}: {
+  corner: Corner;
+  block: Block;
+  scale: number;
+  canvasH: number;
+  onResize: (box: Box) => void;
+}) {
+  // Geometry captured at gesture start so the total delta is measured from there.
+  const start = useRef<{ block: Block; x: number; y: number } | null>(null);
+  const lockAspect = block.type === "image";
+  return (
+    <div
+      style={handleStyle(corner)}
+      onPointerDown={(e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        start.current = { block, x: e.clientX, y: e.clientY };
+        e.currentTarget.setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={(e) => {
+        if (!start.current) return;
+        const s = start.current;
+        onResize(
+          resizeBlock(s.block, corner, e.clientX - s.x, e.clientY - s.y, scale, canvasH, lockAspect),
+        );
+      }}
+      onPointerUp={(e) => {
+        start.current = null;
+        e.currentTarget.releasePointerCapture(e.pointerId);
+      }}
+    />
+  );
+}
+
+function handleStyle(corner: Corner): CSSProperties {
+  const size = 12;
+  const off = -size / 2;
+  const base: CSSProperties = {
+    position: "absolute",
+    width: size,
+    height: size,
+    background: "#3b82f6",
+    borderRadius: 2,
+    zIndex: 1001,
+    touchAction: "none",
+  };
+  const east = corner.includes("e");
+  const south = corner.includes("s");
+  return {
+    ...base,
+    [east ? "right" : "left"]: off,
+    [south ? "bottom" : "top"]: off,
+    cursor: east === south ? "nwse-resize" : "nesw-resize",
+  };
 }
