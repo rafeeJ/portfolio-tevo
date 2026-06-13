@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canvasHeight, toBoxPercent } from "../src/render/scale";
+import { canvasHeight, imageSizes, priorityImageId, toBoxPercent } from "../src/render/scale";
 import { CANVAS_WIDTH, type Block } from "../src/lib/types";
 
 function block(partial: Partial<Block>): Block {
@@ -78,5 +78,47 @@ describe("toBoxPercent", () => {
     const h = 1000;
     const b = block({ x: CANVAS_WIDTH / 2, y: 500, width: CANVAS_WIDTH / 2, height: 500 });
     expect(toBoxPercent(b, h)).toEqual({ left: 50, top: 50, width: 50, height: 50 });
+  });
+});
+
+describe("priorityImageId", () => {
+  it("is null when there are no images", () => {
+    expect(priorityImageId([])).toBeNull();
+    expect(priorityImageId([block({ id: "t", type: "heading" })])).toBeNull();
+  });
+
+  it("picks the topmost image", () => {
+    const blocks = [
+      block({ id: "low", y: 400 }),
+      block({ id: "high", y: 50 }),
+      block({ id: "mid", y: 200 }),
+    ];
+    expect(priorityImageId(blocks)).toBe("high");
+  });
+
+  it("breaks ties on y by the leftmost x", () => {
+    const blocks = [
+      block({ id: "right", y: 100, x: 800 }),
+      block({ id: "left", y: 100, x: 100 }),
+    ];
+    expect(priorityImageId(blocks)).toBe("left");
+  });
+
+  it("ignores text blocks when choosing the hero", () => {
+    const blocks = [
+      block({ id: "txt", type: "heading", y: 0 }),
+      block({ id: "img", type: "image", y: 100 }),
+    ];
+    expect(priorityImageId(blocks)).toBe("img");
+  });
+});
+
+describe("imageSizes", () => {
+  it("caps the vw width at the box's full-canvas render width", () => {
+    expect(imageSizes(50)).toBe(`min(50vw, ${CANVAS_WIDTH / 2}px)`);
+  });
+
+  it("rounds fractional percentages", () => {
+    expect(imageSizes(33.3333)).toBe("min(33vw, 480px)");
   });
 });
