@@ -15,6 +15,9 @@ import { Route as AdminIndexRouteImport } from './routes/admin/index'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ImgImageIdRouteImport } from './routes/img.$imageId'
 import { Route as AdminPIdRouteImport } from './routes/admin/p.$id'
+import { Route as AdminApiUploadRouteImport } from './routes/admin/api/upload'
+import { Route as AdminApiSaveRouteImport } from './routes/admin/api/save'
+import { Route as AdminApiCreatePageRouteImport } from './routes/admin/api/create-page'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -46,6 +49,21 @@ const AdminPIdRoute = AdminPIdRouteImport.update({
   path: '/admin/p/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminApiUploadRoute = AdminApiUploadRouteImport.update({
+  id: '/admin/api/upload',
+  path: '/admin/api/upload',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminApiSaveRoute = AdminApiSaveRouteImport.update({
+  id: '/admin/api/save',
+  path: '/admin/api/save',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminApiCreatePageRoute = AdminApiCreatePageRouteImport.update({
+  id: '/admin/api/create-page',
+  path: '/admin/api/create-page',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +71,9 @@ export interface FileRoutesByFullPath {
   '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/api/create-page': typeof AdminApiCreatePageRoute
+  '/admin/api/save': typeof AdminApiSaveRoute
+  '/admin/api/upload': typeof AdminApiUploadRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +82,9 @@ export interface FileRoutesByTo {
   '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
   '/admin': typeof AdminIndexRoute
+  '/admin/api/create-page': typeof AdminApiCreatePageRoute
+  '/admin/api/save': typeof AdminApiSaveRoute
+  '/admin/api/upload': typeof AdminApiUploadRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
 export interface FileRoutesById {
@@ -70,6 +94,9 @@ export interface FileRoutesById {
   '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
   '/admin/': typeof AdminIndexRoute
+  '/admin/api/create-page': typeof AdminApiCreatePageRoute
+  '/admin/api/save': typeof AdminApiSaveRoute
+  '/admin/api/upload': typeof AdminApiUploadRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
 export interface FileRouteTypes {
@@ -80,9 +107,21 @@ export interface FileRouteTypes {
     | '/img/$imageId'
     | '/p/$slug'
     | '/admin/'
+    | '/admin/api/create-page'
+    | '/admin/api/save'
+    | '/admin/api/upload'
     | '/admin/p/$id'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/img/$imageId' | '/p/$slug' | '/admin' | '/admin/p/$id'
+  to:
+    | '/'
+    | '/about'
+    | '/img/$imageId'
+    | '/p/$slug'
+    | '/admin'
+    | '/admin/api/create-page'
+    | '/admin/api/save'
+    | '/admin/api/upload'
+    | '/admin/p/$id'
   id:
     | '__root__'
     | '/'
@@ -90,6 +129,9 @@ export interface FileRouteTypes {
     | '/img/$imageId'
     | '/p/$slug'
     | '/admin/'
+    | '/admin/api/create-page'
+    | '/admin/api/save'
+    | '/admin/api/upload'
     | '/admin/p/$id'
   fileRoutesById: FileRoutesById
 }
@@ -99,6 +141,9 @@ export interface RootRouteChildren {
   ImgImageIdRoute: typeof ImgImageIdRoute
   PSlugRoute: typeof PSlugRoute
   AdminIndexRoute: typeof AdminIndexRoute
+  AdminApiCreatePageRoute: typeof AdminApiCreatePageRoute
+  AdminApiSaveRoute: typeof AdminApiSaveRoute
+  AdminApiUploadRoute: typeof AdminApiUploadRoute
   AdminPIdRoute: typeof AdminPIdRoute
 }
 
@@ -146,6 +191,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminPIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/api/upload': {
+      id: '/admin/api/upload'
+      path: '/admin/api/upload'
+      fullPath: '/admin/api/upload'
+      preLoaderRoute: typeof AdminApiUploadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/api/save': {
+      id: '/admin/api/save'
+      path: '/admin/api/save'
+      fullPath: '/admin/api/save'
+      preLoaderRoute: typeof AdminApiSaveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/api/create-page': {
+      id: '/admin/api/create-page'
+      path: '/admin/api/create-page'
+      fullPath: '/admin/api/create-page'
+      preLoaderRoute: typeof AdminApiCreatePageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -155,6 +221,9 @@ const rootRouteChildren: RootRouteChildren = {
   ImgImageIdRoute: ImgImageIdRoute,
   PSlugRoute: PSlugRoute,
   AdminIndexRoute: AdminIndexRoute,
+  AdminApiCreatePageRoute: AdminApiCreatePageRoute,
+  AdminApiSaveRoute: AdminApiSaveRoute,
+  AdminApiUploadRoute: AdminApiUploadRoute,
   AdminPIdRoute: AdminPIdRoute,
 }
 export const routeTree = rootRouteImport

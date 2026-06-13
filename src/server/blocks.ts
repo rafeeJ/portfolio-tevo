@@ -1,11 +1,8 @@
-// Persist a page's full block set from the editor. Admin-only (Cloudflare Access
-// in prod). Validated before it touches D1; the whole save runs as one batch so
-// the page's blocks are reconciled atomically — upsert what's present, delete
-// what's gone.
-import { createServerFn } from "@tanstack/react-start";
+// Persist a page's full block set from the editor. The HTTP entry point is the
+// Access-gated POST /admin/api/save route; this module holds the validation +
+// the atomic batch (upsert present, delete removed) so the route stays thin.
 import type { BlockRecord } from "../lib/map";
 import type { BlockType } from "../lib/types";
-import { getDb } from "./env";
 
 export interface SavePageInput {
   pageId: string;
@@ -21,7 +18,7 @@ const BLOCK_TYPES: ReadonlySet<BlockType> = new Set([
 
 const finite = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n);
 
-function validate(data: SavePageInput): SavePageInput {
+export function validateSaveInput(data: SavePageInput): SavePageInput {
   if (typeof data?.pageId !== "string" || !Array.isArray(data.blocks)) {
     throw new Error("Invalid save payload");
   }
@@ -46,42 +43,41 @@ const UPSERT = `INSERT INTO blocks
     image_id = excluded.image_id, text = excluded.text, style = excluded.style,
     updated_at = excluded.updated_at`;
 
-export const savePage = createServerFn({ method: "POST" })
-  .validator(validate)
-  .handler(async ({ data }): Promise<{ saved: number }> => {
-    const db = getDb();
-    const now = Date.now();
-    const ids = data.blocks.map((b) => b.id);
-
-    const deleteRemoved =
-      ids.length > 0
-        ? db
-            .prepare(
-              `DELETE FROM blocks WHERE page_id = ? AND id NOT IN (${ids.map(() => "?").join(",")})`,
-            )
-            .bind(data.pageId, ...ids)
-        : db.prepare("DELETE FROM blocks WHERE page_id = ?").bind(data.pageId);
-
-    const upserts = data.blocks.map((b) =>
-      db
-        .prepare(UPSERT)
-        .bind(
-          b.id,
-          data.pageId,
-          b.type,
-          b.x,
-          b.y,
-          b.width,
-          b.height,
-          b.z,
-          b.image_id,
-          b.text,
-          b.style,
-          now,
-          now,
-        ),
-    );
-
-    await db.batch([deleteRemoved, ...upserts]);
-    return { saved: data.blocks.length };
-  });
+/** Reconcile a page's blocks atomically: upsert what's present, delete what's gone. */
+export async function applySavePage(
+  db: D1Database,
+  data: SavePageInput,
+): Promise<{ saved: number }> {
+  if (data.blocks.length === 0) {
+    await db.prepare("DELETE FROM blocks WHERE page_id = ?").bind(data.pageId).run();
+    return { saved: 0 };
+  }
+  const now = Date.now();
+  const ids = data.blocks.map((b) => b.id);
+  const deleteRemoved = db
+    .prepare(
+      `DELETE FROM blocks WHERE page_id = ? AND id NOT IN (${ids.map(() => "?").join(",")})`,
+    )
+    .bind(data.pageId, ...ids);
+  const upserts = data.blocks.map((b) =>
+    db
+      .prepare(UPSERT)
+      .bind(
+        b.id,
+        data.pageId,
+        b.type,
+        b.x,
+        b.y,
+        b.width,
+        b.height,
+        b.z,
+        b.image_id,
+        b.text,
+        b.style,
+        now,
+        now,
+      ),
+  );
+  await db.batch([deleteRemoved, ...upserts]);
+  return { saved: data.blocks.length };
+}

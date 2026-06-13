@@ -3,11 +3,10 @@ import { useEffect, useRef, useState } from "react";
 import { EditorCanvas } from "../../editor/EditorCanvas";
 import { useEditorModel, type TextType } from "../../editor/model";
 import { backZ, frontZ } from "../../editor/zorder";
+import { savePage, uploadImage } from "../../lib/admin-api";
 import { blockToRecord } from "../../lib/map";
 import type { TextAlign } from "../../lib/types";
 import { pipelineImageResolver } from "../../render/render-blocks";
-import { savePage } from "../../server/blocks";
-import { uploadImage } from "../../server/images";
 import { loadEditorPage } from "../../server/pages";
 
 export const Route = createFileRoute("/admin/p/$id")({
@@ -47,9 +46,7 @@ function Editor() {
     setUploading(true);
     setUploadError(null);
     try {
-      const form = new FormData();
-      form.append("file", file);
-      const img = await uploadImage({ data: form });
+      const img = await uploadImage(file);
       model.checkpoint();
       setSelectedId(model.addImageBlock(img.id, img.width, img.height));
     } catch (err) {
@@ -93,10 +90,8 @@ function Editor() {
     setSaving(true);
     try {
       await savePage({
-        data: {
-          pageId: page.id,
-          blocks: model.blocks.map((b) => blockToRecord(b, page.id)),
-        },
+        pageId: page.id,
+        blocks: model.blocks.map((b) => blockToRecord(b, page.id)),
       });
       model.markSaved();
     } finally {
