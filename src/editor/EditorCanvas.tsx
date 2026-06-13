@@ -10,6 +10,7 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DragMoveEvent,
 } from "@dnd-kit/core";
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { CANVAS_WIDTH, type Block } from "../lib/types";
@@ -22,6 +23,7 @@ import {
   type Box,
   type Corner,
 } from "./geometry";
+import { computeAlignment, snapDragResult } from "./snap";
 
 const CORNERS: Corner[] = ["nw", "ne", "sw", "se"];
 
@@ -29,11 +31,20 @@ export interface EditorCanvasProps {
   blocks: Block[];
   resolveImage?: (imageId: string) => ResolvedImage;
   onUpdate: (id: string, patch: Partial<Block>) => void;
+  snap: boolean;
 }
 
-export function EditorCanvas({ blocks, resolveImage, onUpdate }: EditorCanvasProps) {
+interface Guides {
+  vLines: number[];
+  hLines: number[];
+}
+
+const NO_GUIDES: Guides = { vLines: [], hLines: [] };
+
+export function EditorCanvas({ blocks, resolveImage, onUpdate, snap }: EditorCanvasProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(CANVAS_WIDTH);
+  const [guides, setGuides] = useState<Guides>(NO_GUIDES);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -49,10 +60,34 @@ export function EditorCanvas({ blocks, resolveImage, onUpdate }: EditorCanvasPro
     useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
   );
 
-  const handleDragEnd = (event: DragEndEvent) => {
+  // The dragged block's provisional box and its siblings, in canvas coords.
+  const provisional = (event: DragMoveEvent | DragEndEvent) => {
     const block = blocks.find((b) => b.id === event.active.id);
-    if (!block) return;
-    onUpdate(block.id, applyDrag(block, event.delta.x, event.delta.y, scale, canvasH));
+    if (!block) return null;
+    const pos = applyDrag(block, event.delta.x, event.delta.y, scale, canvasH);
+    const box: Box = { ...pos, width: block.width, height: block.height };
+    const others: Box[] = blocks.filter((b) => b.id !== block.id);
+    return { block, box, others };
+  };
+
+  const handleDragMove = (event: DragMoveEvent) => {
+    if (!snap) return;
+    const p = provisional(event);
+    if (!p) return;
+    const a = computeAlignment(p.box, p.others);
+    setGuides({ vLines: a.vLines, hLines: a.hLines });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setGuides(NO_GUIDES);
+    const p = provisional(event);
+    if (!p) return;
+    if (snap) {
+      const s = snapDragResult(p.box, p.others);
+      onUpdate(p.block.id, { x: s.x, y: s.y });
+    } else {
+      onUpdate(p.block.id, { x: p.box.x, y: p.box.y });
+    }
   };
 
   return (
@@ -65,7 +100,7 @@ export function EditorCanvas({ blocks, resolveImage, onUpdate }: EditorCanvasPro
         containerType: "inline-size",
       }}
     >
-      <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+      <DndContext sensors={sensors} onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
         {blocks.map((block) => (
           <DraggableBlock
             key={block.id}
@@ -77,7 +112,47 @@ export function EditorCanvas({ blocks, resolveImage, onUpdate }: EditorCanvasPro
           />
         ))}
       </DndContext>
+      <GuideLines guides={guides} canvasH={canvasH} />
     </div>
+  );
+}
+
+function GuideLines({ guides, canvasH }: { guides: Guides; canvasH: number }) {
+  return (
+    <>
+      {guides.vLines.map((x) => (
+        <div
+          key={`v${x}`}
+          data-guide="v"
+          style={{
+            position: "absolute",
+            left: `${(x / CANVAS_WIDTH) * 100}%`,
+            top: 0,
+            bottom: 0,
+            width: 1,
+            background: "#ec4899",
+            zIndex: 2000,
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+      {guides.hLines.map((y) => (
+        <div
+          key={`h${y}`}
+          data-guide="h"
+          style={{
+            position: "absolute",
+            top: `${(y / canvasH) * 100}%`,
+            left: 0,
+            right: 0,
+            height: 1,
+            background: "#ec4899",
+            zIndex: 2000,
+            pointerEvents: "none",
+          }}
+        />
+      ))}
+    </>
   );
 }
 
