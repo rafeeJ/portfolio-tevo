@@ -10,12 +10,14 @@ export function ResizeHandle({
   block,
   scale,
   canvasH,
+  onResizeStart,
   onResize,
 }: {
   corner: Corner;
   block: Block;
   scale: number;
   canvasH: number;
+  onResizeStart: () => void;
   onResize: (box: Box) => void;
 }) {
   const start = useRef<{ block: Block; x: number; y: number } | null>(null);
@@ -26,6 +28,7 @@ export function ResizeHandle({
       onPointerDown={(e) => {
         e.stopPropagation();
         e.preventDefault();
+        onResizeStart(); // one undo checkpoint per resize gesture
         start.current = { block, x: e.clientX, y: e.clientY };
         e.currentTarget.setPointerCapture(e.pointerId);
       }}
