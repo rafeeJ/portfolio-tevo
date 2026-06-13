@@ -27,6 +27,8 @@ export interface EditorCanvasProps {
   blocks: Block[];
   resolveImage?: (imageId: string) => ResolvedImage;
   onUpdate: (id: string, patch: Partial<Block>) => void;
+  /** Mark an undo restore point — called at gesture/edit boundaries. */
+  onCheckpoint: () => void;
   snap: boolean;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
@@ -43,6 +45,7 @@ export function EditorCanvas({
   blocks,
   resolveImage,
   onUpdate,
+  onCheckpoint,
   snap,
   selectedId,
   onSelect,
@@ -110,7 +113,12 @@ export function EditorCanvas({
         if (e.target === e.currentTarget) onSelect(null);
       }}
     >
-      <DndContext sensors={sensors} onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        onDragStart={onCheckpoint}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+      >
         {blocks.map((block) => (
           <DraggableBlock
             key={block.id}
@@ -119,11 +127,13 @@ export function EditorCanvas({
             scale={scale}
             resolveImage={resolveImage}
             onUpdate={onUpdate}
+            onCheckpoint={onCheckpoint}
             selected={block.id === selectedId}
             onSelect={onSelect}
             editing={block.id === editingId}
             onStartEdit={setEditingId}
             onCommitText={(id, text) => {
+              onCheckpoint();
               onUpdate(id, { text });
               setEditingId(null);
             }}
@@ -180,6 +190,7 @@ function DraggableBlock({
   scale,
   resolveImage,
   onUpdate,
+  onCheckpoint,
   selected,
   onSelect,
   editing,
@@ -191,6 +202,7 @@ function DraggableBlock({
   scale: number;
   resolveImage?: (imageId: string) => ResolvedImage;
   onUpdate: (id: string, patch: Partial<Block>) => void;
+  onCheckpoint: () => void;
   selected: boolean;
   onSelect: (id: string | null) => void;
   editing: boolean;
@@ -248,6 +260,7 @@ function DraggableBlock({
             block={block}
             scale={scale}
             canvasH={canvasH}
+            onResizeStart={onCheckpoint}
             onResize={(b) => onUpdate(block.id, b)}
           />
         ))}

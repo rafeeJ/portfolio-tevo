@@ -113,15 +113,18 @@
   - Files: `src/editor/model.ts` (addTextBlock/deleteBlock), `src/editor/EditableText.tsx`, `src/server/blocks.ts` (savePage), `src/lib/map.ts` (blockToRecord), `src/render/render-blocks.tsx` (textPresetStyle), `src/routes/admin/p.$id.tsx` (toolbar), `tests/map.test.ts`.
   - **Done:** Toolbar adds Heading/Subheading/Body; double-click → inline contentEditable; align L/C/R; Delete. **`savePage`** rewrites the page's blocks atomically (upsert + delete-reconcile, validated). `blockToRecord` (3 round-trip tests). **Verified in browser (MCP):** add heading → edit text "My New Heading" → center align → Save → D1 persists (originals intact, 6 blocks) → delete → Save → reconciles to 5. Also extracted ResizeHandle/EditableText to their own files (canvas 366→257 lines).
 
-- [ ] **S11 Upload + place image from editor**
+- [x] **S11 Upload + place image from editor** ✅ 2026-06-13
   - Acceptance: upload UI calls S3.2, creates an image block on the canvas at intrinsic-derived size; persists.
   - Verify: e2e — upload fixture, block appears, save, public shows it.
-  - Files: `src/editor/Upload.tsx`, `src/editor/Canvas.tsx`, `e2e/editor-upload.spec.ts`.
+  - Files: `src/editor/model.ts` (addImageBlock + addBlock helper), `src/routes/admin/p.$id.tsx` (+ Photo, file input, onPickFile).
+  - **Done:** "+ Photo" → file picker → `uploadImage` (R2 store + images row via `IMAGES.info` dims) → `addImageBlock` (aspect-correct) → renders via /img. **Verified in browser (MCP `upload_file`):** uploaded a fixture → block appears (480×320 variant, 3:2) → Save → D1 images row (1200×800) + block.image_id + R2 object all persist. **Skills run this branch:** thermo-nuclear (extracted shared `addBlock`; added upload error handling) + deslop (constant-naming tidy).
 
-- [ ] **S12 Undo/redo (in-session)**
-  - Acceptance: command stack undoes/redoes drag/resize/z/text/add/delete within the session; not persisted history.
-  - Verify: unit tests on the command stack; e2e undo after a drag.
-  - Files: `src/editor/history.ts`, `src/editor/model.ts`, `tests/history.test.ts`.
+- [x] **S12 Undo/redo (in-session)** ✅ 2026-06-13
+  - Acceptance: undoes/redoes drag/resize/z/text/add/delete within the session; not persisted history.
+  - Verify: unit tests on the history; e2e undo after a drag.
+  - Files: `src/editor/history.ts`, `src/editor/model.ts`, `src/editor/EditorCanvas.tsx`, `src/editor/ResizeHandle.tsx`, `src/routes/admin/p.$id.tsx`, `tests/history.test.ts`.
+  - **Done:** pure generic `History<T>` (checkpoint/setPresent/undo/redo, 100-cap; 7 tests). Model wraps blocks in history; **checkpoints at gesture boundaries** (drag-start, resize-start, text-commit, before each discrete op) so one gesture = one undo step. Undo/Redo buttons + ⌘Z/⌘⇧Z (guarded while editing text). **Verified in browser (MCP):** drag→undo→original→redo→moved; multi-move resize = exactly one undo step (no flooding). _Note: undo always marks dirty (undo-to-saved still shows "unsaved" — harmless; future refinement._
+  - Skills this branch: deslop (clean); thermo-nuclear applied inline (harness now blocks auto-invoking that skill).
 
 - [ ] **S13 Create page / subpage UI**
   - Acceptance: admin can create a page or subpage (title, slug, optional parent); slug validated/unique; appears in index.
