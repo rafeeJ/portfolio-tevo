@@ -19,6 +19,13 @@ export async function getPageBySlug(
   return db.prepare("SELECT * FROM pages WHERE slug = ?").bind(slug).first<PageRow>();
 }
 
+export async function getPageById(
+  db: D1Database,
+  id: string,
+): Promise<PageRow | null> {
+  return db.prepare("SELECT * FROM pages WHERE id = ?").bind(id).first<PageRow>();
+}
+
 export async function getImageById(
   db: D1Database,
   id: string,
