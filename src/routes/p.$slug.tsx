@@ -1,6 +1,6 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
 import { imageSrcSet, imageUrl } from "../images/url";
-import { CanvasStage } from "../render/render-blocks";
+import { ResponsiveCanvas } from "../render/responsive-canvas";
 import { loadPageBySlug } from "../server/pages";
 
 const resolveImage = (imageId: string) => ({
@@ -23,7 +23,7 @@ function PageView() {
   const { blocks } = Route.useLoaderData();
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-10">
-      <CanvasStage blocks={blocks} resolveImage={resolveImage} />
+      <ResponsiveCanvas blocks={blocks} resolveImage={resolveImage} />
     </main>
   );
 }

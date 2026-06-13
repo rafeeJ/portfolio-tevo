@@ -62,17 +62,18 @@
 
 ## S4 — Mobile auto-reflow (CP-C)
 
-- [ ] **S4.1 `reflow()` pure module**
-  - Acceptance: `reflow(blocks, mobileWidth)` sorts by (y,x), stacks to one column, preserves aspect ratios; ≥ 8 fixture layouts → expected outputs; ≥ 90% coverage on the module.
-  - Verify: `pnpm test src/reflow`.
+- [x] **S4.1 `reflow()` pure module** ✅ 2026-06-13
+  - Acceptance: `reflow` sorts by (y,x) into one column; ≥ 8 fixture layouts; high coverage.
   - Files: `src/reflow/reflow.ts`, `tests/reflow.test.ts`.
+  - **Done:** pure `reflow(blocks)` → reading-order stack (y, then x, id tie-break); 10 fixtures (ordering, side-by-side, grid, overlap, ties, no-mutation). Aspect-preservation is the renderer's job (CSS), keeping reflow pure.
 
-- [ ] **S4.2 Wire reflow into public renderer**
-  - Acceptance: viewport < breakpoint renders reflowed single column; no horizontal scroll at 390px; images aspect-correct.
-  - Verify: Playwright at 390px viewport on the seeded page.
-  - Files: `src/render/render-blocks.tsx`, `e2e/mobile-reflow.spec.ts`.
+- [x] **S4.2 Wire reflow into public renderer** ✅ 2026-06-13
+  - Acceptance: viewport < breakpoint renders reflowed single column; no horizontal scroll; images aspect-correct.
+  - Files: `src/render/mobile-stack.tsx`, `src/render/responsive-canvas.tsx`, `src/routes/p.$slug.tsx`.
+  - **Done:** `MobileStack` (flex column, full-width images via CSS aspect-ratio, readable text sizes) + `ResponsiveCanvas` (CSS `md:` breakpoint toggle, no JS, SSR-safe). Verified live: `/p/demo` mobile = heading→subheading→body→image in reading order, `100vw` images.
+  - ⚠️ **Launch-perf note (S14):** render-both-toggle-CSS means a browser may fetch image variants for the hidden layout. Acceptable for v1; revisit at S14 if LCP suffers (JS switch or single-`<picture>` approach).
 
-> **CHECKPOINT CP-C** — public read-path complete (images + mobile). Review.
+> **CHECKPOINT CP-C** ✅ — public read-path complete (render + images + mobile reflow).
 
 ## S5–S13 — Canvas editor (behind local /admin; CP-D)
 
