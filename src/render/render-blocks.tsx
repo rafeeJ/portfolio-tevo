@@ -67,35 +67,60 @@ function BlockView({
     height: `${box.height}%`,
     zIndex: block.z,
   };
+  return (
+    <div style={base}>
+      <BlockContent
+        block={block}
+        resolveImage={resolveImage}
+        sizes={`${Math.round(box.width)}vw`}
+      />
+    </div>
+  );
+}
 
+/**
+ * Renders a block's content filling its positioned parent (100% box). Shared by
+ * the public CanvasStage and the editor canvas, which own the positioning.
+ */
+export function BlockContent({
+  block,
+  resolveImage,
+  sizes,
+}: {
+  block: Block;
+  resolveImage?: (imageId: string) => ResolvedImage;
+  sizes?: string;
+}) {
   if (block.type === "image") {
     const img = block.imageId ? resolveImage?.(block.imageId) : undefined;
-    return (
-      <div style={base}>
-        {img ? (
-          <img
-            src={img.src}
-            srcSet={img.srcSet}
-            sizes={`${Math.round(box.width)}vw`}
-            alt=""
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-          />
-        ) : (
-          <div style={{ width: "100%", height: "100%", background: "#e5e5e5" }} />
-        )}
-      </div>
+    return img ? (
+      <img
+        src={img.src}
+        srcSet={img.srcSet}
+        sizes={sizes}
+        alt=""
+        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+      />
+    ) : (
+      <div style={{ width: "100%", height: "100%", background: "#e5e5e5" }} />
     );
   }
 
   // block.type is narrowed to a text preset key after the image early-return above.
   const preset = TEXT_PRESETS[block.type];
-  const textStyle: CSSProperties = {
-    ...base,
-    fontSize: `${preset.fontSizeCqw}cqw`,
-    fontWeight: preset.fontWeight,
-    lineHeight: preset.lineHeight,
-    textAlign: block.align ?? "left",
-    overflow: "hidden",
-  };
-  return <div style={textStyle}>{block.text}</div>;
+  return (
+    <div
+      style={{
+        width: "100%",
+        height: "100%",
+        fontSize: `${preset.fontSizeCqw}cqw`,
+        fontWeight: preset.fontWeight,
+        lineHeight: preset.lineHeight,
+        textAlign: block.align ?? "left",
+        overflow: "hidden",
+      }}
+    >
+      {block.text}
+    </div>
+  );
 }

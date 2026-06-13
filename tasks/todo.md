@@ -83,10 +83,11 @@
   - Files: `src/routes/admin/p.$id.tsx`, `src/editor/model.ts`, `src/server/pages.ts` (loadEditorPage), `src/db/client.ts` (getPageById).
   - **Done:** `/admin/p/$id` loads via `loadEditorPage` into `useEditorModel` (SoT seam, grows in S6), renders read-only via shared `CanvasStage`. Verified live: matches public render (canvas + image pipeline + text), bad id → 404. Review: factored `pageWithBlocks` (shared loader helper) + canonical `pipelineImageResolver` (killed a duplicate).
 
-- [ ] **S6 Drag + persist**
+- [x] **S6 Drag + persist** ✅ 2026-06-13
   - Acceptance: drag a block (dnd-kit) updates the model; Save persists new x/y to D1; reload shows moved block.
   - Verify: e2e — drag, save, reload, assert position.
-  - Files: `src/editor/Canvas.tsx`, `src/editor/useDrag.ts`, `src/server/blocks.ts`, `e2e/editor-drag.spec.ts`.
+  - Files: `src/editor/geometry.ts`, `src/editor/EditorCanvas.tsx`, `src/editor/model.ts`, `src/server/blocks.ts`, `src/routes/admin/p.$id.tsx`, `src/render/render-blocks.tsx` (BlockContent extract), `tests/geometry.test.ts`.
+  - **Done:** pure `geometry` (drag delta→canvas, clamp; 9 tests). `EditorCanvas` = dnd-kit draggables in canvas coords; no CSS-scaled parent so transforms track the cursor. `saveBlockLayout` = validated atomic `db.batch` UPDATE. Model `setPosition`/`dirty`. **Verified in a real browser (chrome-devtools MCP):** dragged heading → clamped to (0,400) → Save → D1 shows x=0,y=400 → reload renders persisted position. Review: extracted `BlockContent` (shared renderer) + reused `toBoxPercent`.
 
 - [ ] **S7 Resize + persist**
   - Acceptance: resize handles (interact.js) update w/h in the model; images keep aspect by default (unlockable); Save persists.

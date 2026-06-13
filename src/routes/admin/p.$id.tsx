@@ -1,6 +1,9 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
+import { useState } from "react";
+import { EditorCanvas } from "../../editor/EditorCanvas";
 import { useEditorModel } from "../../editor/model";
-import { CanvasStage, pipelineImageResolver } from "../../render/render-blocks";
+import { pipelineImageResolver } from "../../render/render-blocks";
+import { saveBlockLayout } from "../../server/blocks";
 import { loadEditorPage } from "../../server/pages";
 
 export const Route = createFileRoute("/admin/p/$id")({
@@ -15,18 +18,56 @@ export const Route = createFileRoute("/admin/p/$id")({
 function Editor() {
   const { page, blocks } = Route.useLoaderData();
   const model = useEditorModel(blocks);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await saveBlockLayout({
+        data: {
+          pageId: page.id,
+          blocks: model.blocks.map(({ id, x, y, width, height, z }) => ({
+            id,
+            x,
+            y,
+            width,
+            height,
+            z,
+          })),
+        },
+      });
+      model.markSaved();
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-neutral-100">
       <header className="flex items-center justify-between border-b border-neutral-200 bg-white px-4 py-3">
         <span className="text-sm font-medium text-neutral-800">
           Editing: {page.title}
         </span>
-        <span className="text-xs text-neutral-400">read-only</span>
+        <div className="flex items-center gap-3">
+          <span className="text-xs text-neutral-400">
+            {model.dirty ? "unsaved changes" : "saved"}
+          </span>
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving || !model.dirty}
+            className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+          >
+            {saving ? "Saving…" : "Save"}
+          </button>
+        </div>
       </header>
       <div className="mx-auto max-w-[1440px] p-4">
-        <div className="bg-white shadow-sm">
-          <CanvasStage blocks={model.blocks} resolveImage={pipelineImageResolver} />
-        </div>
+        <EditorCanvas
+          blocks={model.blocks}
+          resolveImage={pipelineImageResolver}
+          onMove={model.setPosition}
+        />
       </div>
     </div>
   );
