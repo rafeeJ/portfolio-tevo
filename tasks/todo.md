@@ -35,12 +35,13 @@
 
 ## S2 — Browsable index (CP-B)
 
-- [ ] **S2.1 Page-tree query + index route**
+- [x] **S2.1 Page-tree query + index route** ✅ 2026-06-13
   - Acceptance: home (and/or `/index`) renders the nested page/subpage tree from `parent_id`+`sort_order` as a navigable TOC linking to `/p/:slug`.
   - Verify: seed a parent + subpage; index shows nesting; links resolve.
-  - Files: `src/server/tree.ts`, `src/routes/index.tsx`, `tests/tree.test.ts`.
+  - Files: `src/lib/tree.ts`, `src/routes/index.tsx`, `tests/tree.test.ts`, `src/server/pages.ts` (loadIndex), `scripts/seed.sql`.
+  - **Done:** pure `buildTree` (7 tests, incl. orphan/filtered-parent safety) + `loadIndex` server fn (published only) + recursive `TreeList` home route. Verified live: index shows Demo Page › Winter Series (nested) + About; all links resolve 200.
 
-> **CHECKPOINT CP-B** — first visible site (seeded page + index). Review.
+> **CHECKPOINT CP-B** ✅ — first visible site (seeded page render + browsable index) complete.
 
 ## S3 — Image upload + resize pipeline
 
