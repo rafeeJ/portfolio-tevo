@@ -2,6 +2,7 @@ import { createFileRoute, notFound } from "@tanstack/react-router";
 import { useState } from "react";
 import { EditorCanvas } from "../../editor/EditorCanvas";
 import { useEditorModel } from "../../editor/model";
+import { backZ, frontZ } from "../../editor/zorder";
 import { pipelineImageResolver } from "../../render/render-blocks";
 import { saveBlockLayout } from "../../server/blocks";
 import { loadEditorPage } from "../../server/pages";
@@ -20,6 +21,7 @@ function Editor() {
   const model = useEditorModel(blocks);
   const [saving, setSaving] = useState(false);
   const [snap, setSnap] = useState(true);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const save = async () => {
     setSaving(true);
@@ -50,6 +52,30 @@ function Editor() {
           Editing: {page.title}
         </span>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              disabled={!selectedId}
+              onClick={() =>
+                selectedId &&
+                model.updateBlock(selectedId, { z: frontZ(model.blocks) })
+              }
+              className="rounded border border-neutral-300 px-2 py-1 text-xs disabled:opacity-40"
+            >
+              Bring to front
+            </button>
+            <button
+              type="button"
+              disabled={!selectedId}
+              onClick={() =>
+                selectedId &&
+                model.updateBlock(selectedId, { z: backZ(model.blocks) })
+              }
+              className="rounded border border-neutral-300 px-2 py-1 text-xs disabled:opacity-40"
+            >
+              Send to back
+            </button>
+          </div>
           <label className="flex items-center gap-1.5 text-xs text-neutral-600">
             <input
               type="checkbox"
@@ -77,6 +103,8 @@ function Editor() {
           resolveImage={pipelineImageResolver}
           onUpdate={model.updateBlock}
           snap={snap}
+          selectedId={selectedId}
+          onSelect={setSelectedId}
         />
       </div>
     </div>

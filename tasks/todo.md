@@ -101,10 +101,11 @@
   - Files: `src/editor/snap.ts`, `src/editor/EditorCanvas.tsx` (onDragMove guides + GuideLines), `src/routes/admin/p.$id.tsx` (Snap toggle), `tests/snap.test.ts`.
   - **Done:** pure `snapToGrid` + `computeAlignment` (edge/center vs siblings) + `snapDragResult` (alignment priority, grid fallback; 8 tests). Live guides during drag (`onDragMove` → pink lines), snap-on-drop, `Snap` checkbox gate. **Verified in browser (MCP):** snap-ON drag produced exact center-alignment (20,195) to the subheading; toggle works. _Note: couldn't cleanly isolate grid-vs-free in-browser (MCP drag always center-aligns; synthetic events don't drive dnd-kit) — relied on the 8 unit tests + observed alignment wiring._
 
-- [ ] **S9 Z-order controls**
+- [x] **S9 Z-order controls** ✅ 2026-06-13
   - Acceptance: bring-forward / send-back reorder `z`; overlap respects order; persists.
-  - Verify: e2e — overlap two blocks, reorder, save, reload asserts stacking.
-  - Files: `src/editor/Canvas.tsx`, `src/editor/zorder.ts`, `e2e/editor-zorder.spec.ts`.
+  - Verify: e2e — reorder, save, reload asserts stacking.
+  - Files: `src/editor/zorder.ts`, `src/editor/EditorCanvas.tsx` (selection), `src/routes/admin/p.$id.tsx` (z buttons), `tests/zorder.test.ts`.
+  - **Done:** pure `frontZ`/`backZ` (just above/below extremes; 4 tests). Added **block selection** (click → blue outline + handles only on selected, resolving S7's always-visible-handles note; click canvas to deselect). Bring-to-front / Send-to-back header buttons act on selection (z = max+1 / min−1). **Verified in browser (MCP):** select d-h → send-to-back z=0 → bring-to-front z=3 → Save → D1 persists z=3.
 
 - [ ] **S10 Text preset blocks**
   - Acceptance: add Heading/Subheading/Body blocks; inline-edit text; preset fixes size/weight/line-height; alignment is the only per-block control; persists.

@@ -32,6 +32,8 @@ export interface EditorCanvasProps {
   resolveImage?: (imageId: string) => ResolvedImage;
   onUpdate: (id: string, patch: Partial<Block>) => void;
   snap: boolean;
+  selectedId: string | null;
+  onSelect: (id: string | null) => void;
 }
 
 interface Guides {
@@ -41,7 +43,14 @@ interface Guides {
 
 const NO_GUIDES: Guides = { vLines: [], hLines: [] };
 
-export function EditorCanvas({ blocks, resolveImage, onUpdate, snap }: EditorCanvasProps) {
+export function EditorCanvas({
+  blocks,
+  resolveImage,
+  onUpdate,
+  snap,
+  selectedId,
+  onSelect,
+}: EditorCanvasProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(CANVAS_WIDTH);
   const [guides, setGuides] = useState<Guides>(NO_GUIDES);
@@ -82,6 +91,7 @@ export function EditorCanvas({ blocks, resolveImage, onUpdate, snap }: EditorCan
     setGuides(NO_GUIDES);
     const p = provisional(event);
     if (!p) return;
+    onSelect(p.block.id);
     if (snap) {
       const s = snapDragResult(p.box, p.others);
       onUpdate(p.block.id, { x: s.x, y: s.y });
@@ -99,6 +109,9 @@ export function EditorCanvas({ blocks, resolveImage, onUpdate, snap }: EditorCan
         aspectRatio: `${CANVAS_WIDTH} / ${canvasH}`,
         containerType: "inline-size",
       }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onSelect(null);
+      }}
     >
       <DndContext sensors={sensors} onDragMove={handleDragMove} onDragEnd={handleDragEnd}>
         {blocks.map((block) => (
@@ -109,6 +122,8 @@ export function EditorCanvas({ blocks, resolveImage, onUpdate, snap }: EditorCan
             scale={scale}
             resolveImage={resolveImage}
             onUpdate={onUpdate}
+            selected={block.id === selectedId}
+            onSelect={onSelect}
           />
         ))}
       </DndContext>
@@ -162,12 +177,16 @@ function DraggableBlock({
   scale,
   resolveImage,
   onUpdate,
+  selected,
+  onSelect,
 }: {
   block: Block;
   canvasH: number;
   scale: number;
   resolveImage?: (imageId: string) => ResolvedImage;
   onUpdate: (id: string, patch: Partial<Block>) => void;
+  selected: boolean;
+  onSelect: (id: string | null) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block.id,
@@ -185,27 +204,35 @@ function DraggableBlock({
       : undefined,
     cursor: "grab",
     touchAction: "none",
-    outline: isDragging ? "2px solid #3b82f6" : "1px solid rgba(0,0,0,0.08)",
+    outline:
+      selected || isDragging
+        ? "2px solid #3b82f6"
+        : "1px solid rgba(0,0,0,0.08)",
   };
   return (
     <div
       ref={setNodeRef}
       style={style}
       data-block-id={block.id}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelect(block.id);
+      }}
       {...listeners}
       {...attributes}
     >
       <BlockContent block={block} resolveImage={resolveImage} sizes="40vw" />
-      {CORNERS.map((corner) => (
-        <ResizeHandle
-          key={corner}
-          corner={corner}
-          block={block}
-          scale={scale}
-          canvasH={canvasH}
-          onResize={(b) => onUpdate(block.id, b)}
-        />
-      ))}
+      {selected &&
+        CORNERS.map((corner) => (
+          <ResizeHandle
+            key={corner}
+            corner={corner}
+            block={block}
+            scale={scale}
+            canvasH={canvasH}
+            onResize={(b) => onUpdate(block.id, b)}
+          />
+        ))}
     </div>
   );
 }
