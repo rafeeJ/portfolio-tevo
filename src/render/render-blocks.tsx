@@ -7,13 +7,19 @@ import type { CSSProperties } from "react";
 import { CANVAS_WIDTH, TEXT_PRESETS, type Block } from "../lib/types";
 import { canvasHeight, toBoxPercent } from "./scale";
 
-export interface CanvasStageProps {
-  blocks: Block[];
-  /** Resolves an image block's id to a src URL (wired to /cdn-cgi/image in S3). */
-  resolveImageSrc?: (imageId: string) => string;
+export interface ResolvedImage {
+  src: string;
+  srcSet?: string;
 }
 
-export function CanvasStage({ blocks, resolveImageSrc }: CanvasStageProps) {
+export interface CanvasStageProps {
+  blocks: Block[];
+  /** Resolves an image block's id to a src (+ optional srcset). Wired to the
+   *  /img pipeline on the public page; the editor passes its own resolver. */
+  resolveImage?: (imageId: string) => ResolvedImage;
+}
+
+export function CanvasStage({ blocks, resolveImage }: CanvasStageProps) {
   const h = canvasHeight(blocks);
   const stageStyle: CSSProperties = {
     position: "relative",
@@ -30,7 +36,7 @@ export function CanvasStage({ blocks, resolveImageSrc }: CanvasStageProps) {
             key={block.id}
             block={block}
             canvasH={h}
-            resolveImageSrc={resolveImageSrc}
+            resolveImage={resolveImage}
           />
         ))}
     </div>
@@ -40,11 +46,11 @@ export function CanvasStage({ blocks, resolveImageSrc }: CanvasStageProps) {
 function BlockView({
   block,
   canvasH,
-  resolveImageSrc,
+  resolveImage,
 }: {
   block: Block;
   canvasH: number;
-  resolveImageSrc?: (imageId: string) => string;
+  resolveImage?: (imageId: string) => ResolvedImage;
 }) {
   const box = toBoxPercent(block, canvasH);
   const base: CSSProperties = {
@@ -57,12 +63,14 @@ function BlockView({
   };
 
   if (block.type === "image") {
-    const src = block.imageId ? resolveImageSrc?.(block.imageId) : undefined;
+    const img = block.imageId ? resolveImage?.(block.imageId) : undefined;
     return (
       <div style={base}>
-        {src ? (
+        {img ? (
           <img
-            src={src}
+            src={img.src}
+            srcSet={img.srcSet}
+            sizes={`${Math.round(box.width)}vw`}
             alt=""
             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
           />

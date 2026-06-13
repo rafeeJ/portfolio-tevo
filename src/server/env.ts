@@ -9,3 +9,7 @@ export function getDb(): D1Database {
 export function getBucket(): R2Bucket {
   return env.BUCKET;
 }
+
+export function getImages(): ImagesBinding {
+  return env.IMAGES;
+}

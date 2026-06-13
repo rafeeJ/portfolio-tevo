@@ -2,7 +2,7 @@
 // they're unit/integration-testable without the `cloudflare:workers` import.
 // Server functions obtain the binding via `getDb()` (see src/server/env.ts).
 
-import type { BlockRow, PageRow } from "./schema";
+import type { BlockRow, ImageRow, PageRow } from "./schema";
 
 /** All pages in deterministic order; the caller groups by parent_id to build the tree. */
 export async function listPages(db: D1Database): Promise<PageRow[]> {
@@ -17,6 +17,22 @@ export async function getPageBySlug(
   slug: string,
 ): Promise<PageRow | null> {
   return db.prepare("SELECT * FROM pages WHERE slug = ?").bind(slug).first<PageRow>();
+}
+
+export async function getImageById(
+  db: D1Database,
+  id: string,
+): Promise<ImageRow | null> {
+  return db.prepare("SELECT * FROM images WHERE id = ?").bind(id).first<ImageRow>();
+}
+
+export async function insertImage(db: D1Database, row: ImageRow): Promise<void> {
+  await db
+    .prepare(
+      "INSERT INTO images (id, r2_key, width, height, bytes, mime, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(row.id, row.r2_key, row.width, row.height, row.bytes, row.mime, row.created_at)
+    .run();
 }
 
 /** All blocks for a page, in stacking order. */
