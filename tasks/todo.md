@@ -107,10 +107,11 @@
   - Files: `src/editor/zorder.ts`, `src/editor/EditorCanvas.tsx` (selection), `src/routes/admin/p.$id.tsx` (z buttons), `tests/zorder.test.ts`.
   - **Done:** pure `frontZ`/`backZ` (just above/below extremes; 4 tests). Added **block selection** (click → blue outline + handles only on selected, resolving S7's always-visible-handles note; click canvas to deselect). Bring-to-front / Send-to-back header buttons act on selection (z = max+1 / min−1). **Verified in browser (MCP):** select d-h → send-to-back z=0 → bring-to-front z=3 → Save → D1 persists z=3.
 
-- [ ] **S10 Text preset blocks**
+- [x] **S10 Text preset blocks** ✅ 2026-06-13
   - Acceptance: add Heading/Subheading/Body blocks; inline-edit text; preset fixes size/weight/line-height; alignment is the only per-block control; persists.
   - Verify: e2e — add each preset, type, save, public render matches preset styling.
-  - Files: `src/editor/TextBlock.tsx`, `src/lib/presets.ts`, `src/server/blocks.ts`, `e2e/editor-text.spec.ts`.
+  - Files: `src/editor/model.ts` (addTextBlock/deleteBlock), `src/editor/EditableText.tsx`, `src/server/blocks.ts` (savePage), `src/lib/map.ts` (blockToRecord), `src/render/render-blocks.tsx` (textPresetStyle), `src/routes/admin/p.$id.tsx` (toolbar), `tests/map.test.ts`.
+  - **Done:** Toolbar adds Heading/Subheading/Body; double-click → inline contentEditable; align L/C/R; Delete. **`savePage`** rewrites the page's blocks atomically (upsert + delete-reconcile, validated). `blockToRecord` (3 round-trip tests). **Verified in browser (MCP):** add heading → edit text "My New Heading" → center align → Save → D1 persists (originals intact, 6 blocks) → delete → Save → reconciles to 5. Also extracted ResizeHandle/EditableText to their own files (canvas 366→257 lines).
 
 - [ ] **S11 Upload + place image from editor**
   - Acceptance: upload UI calls S3.2, creates an image block on the canvas at intrinsic-derived size; persists.

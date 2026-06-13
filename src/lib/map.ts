@@ -1,6 +1,6 @@
-// Maps a persisted DB row onto the render-model Block.
+// Maps between persisted DB rows and the render-model Block.
 import type { BlockRow } from "../db/schema";
-import type { Block, TextAlign } from "./types";
+import type { Block, BlockType, TextAlign } from "./types";
 
 const ALIGNS: ReadonlySet<string> = new Set(["left", "center", "right"]);
 
@@ -28,5 +28,37 @@ export function rowToBlock(row: BlockRow): Block {
     imageId: row.image_id,
     text: row.text,
     align: parseAlign(row.style),
+  };
+}
+
+/** Persistable shape of a block (column-named), produced for the save endpoint. */
+export interface BlockRecord {
+  id: string;
+  page_id: string;
+  type: BlockType;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  z: number;
+  image_id: string | null;
+  text: string | null;
+  style: string | null;
+}
+
+export function blockToRecord(block: Block, pageId: string): BlockRecord {
+  return {
+    id: block.id,
+    page_id: pageId,
+    type: block.type,
+    x: block.x,
+    y: block.y,
+    width: block.width,
+    height: block.height,
+    z: block.z,
+    image_id: block.imageId ?? null,
+    text: block.text ?? null,
+    style:
+      block.type === "image" ? null : JSON.stringify({ align: block.align ?? "left" }),
   };
 }
