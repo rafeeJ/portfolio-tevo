@@ -19,7 +19,7 @@ export const Route = createFileRoute("/admin/p/$id")({
 });
 
 const BTN =
-  "rounded border border-neutral-300 px-2 py-1 text-xs disabled:opacity-40 hover:bg-neutral-100";
+  "mono border-2 border-ink px-2.5 py-1 text-[10px] uppercase tracking-wider transition-colors disabled:opacity-30 enabled:hover:bg-ink enabled:hover:text-paper";
 
 function Editor() {
   const { page, blocks } = Route.useLoaderData();
@@ -100,9 +100,11 @@ function Editor() {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-100">
-      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-neutral-200 bg-white px-4 py-2">
-        <span className="text-sm font-medium text-neutral-800">{page.title}</span>
+    <div className="min-h-screen bg-paper">
+      <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b-2 border-ink bg-paper px-4 py-2">
+        <span className="mono mr-1 text-[11px] uppercase">
+          <span className="text-hazard">▌</span>&nbsp;EDIT&nbsp;/&nbsp;{page.title}
+        </span>
 
         <div className="flex items-center gap-1">
           <button
@@ -185,7 +187,7 @@ function Editor() {
           </button>
           <button
             type="button"
-            className={`${BTN} text-red-600`}
+            className={`${BTN} border-hazard text-hazard enabled:hover:!bg-hazard enabled:hover:!text-paper`}
             disabled={!selectedId}
             onClick={remove}
           >
@@ -193,35 +195,37 @@ function Editor() {
           </button>
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="mono ml-auto flex items-center gap-3 text-[10px] uppercase">
           {uploadError && (
-            <span className="text-xs text-red-600" role="alert">
-              {uploadError}
+            <span className="text-hazard" role="alert">
+              ! {uploadError}
             </span>
           )}
-          <label className="flex items-center gap-1.5 text-xs text-neutral-600">
+          <label className="flex items-center gap-1.5 tracking-wider text-ink-soft">
             <input
               type="checkbox"
               checked={snap}
               onChange={(e) => setSnap(e.target.checked)}
+              className="accent-hazard"
             />
             Snap
           </label>
-          <span className="text-xs text-neutral-400">
-            {model.dirty ? "unsaved changes" : "saved"}
+          <span className={model.dirty ? "text-hazard" : "text-ink-soft"}>
+            {model.dirty ? "● UNSAVED" : "○ SAVED"}
           </span>
           <button
             type="button"
             onClick={save}
             disabled={saving || !model.dirty}
-            className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+            className="mono border-2 border-ink bg-ink px-3 py-1.5 text-[11px] uppercase tracking-wider text-paper transition-colors disabled:opacity-30 enabled:hover:bg-hazard enabled:hover:border-hazard"
           >
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Saving…" : "Save ▸"}
           </button>
         </div>
       </header>
 
-      <div className="mx-auto max-w-[1440px] p-4">
+      <div className="bg-paper-2 px-4 py-6">
+        <div className="mx-auto max-w-[1440px] border-2 border-ink bg-paper p-4">
         <EditorCanvas
           blocks={model.blocks}
           resolveImage={pipelineImageResolver}
@@ -231,6 +235,7 @@ function Editor() {
           selectedId={selectedId}
           onSelect={setSelectedId}
         />
+        </div>
       </div>
     </div>
   );

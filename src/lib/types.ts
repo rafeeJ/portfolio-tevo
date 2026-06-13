@@ -29,9 +29,9 @@ export interface Block {
  * container width) so text scales with the canvas under pure CSS. Refined in S10.
  */
 export const TEXT_PRESETS = {
-  heading: { fontSizeCqw: 4.2, fontWeight: 700, lineHeight: 1.1 },
-  subheading: { fontSizeCqw: 2.6, fontWeight: 600, lineHeight: 1.2 },
-  body: { fontSizeCqw: 1.4, fontWeight: 400, lineHeight: 1.5 },
+  heading: { fontSizeCqw: 4.4, fontWeight: 400, lineHeight: 1.0, font: "var(--font-display)" },
+  subheading: { fontSizeCqw: 2.4, fontWeight: 700, lineHeight: 1.15, font: "var(--font-mono)" },
+  body: { fontSizeCqw: 1.4, fontWeight: 400, lineHeight: 1.5, font: "var(--font-mono)" },
 } as const;
 
 export type TextPresetKey = keyof typeof TEXT_PRESETS;
