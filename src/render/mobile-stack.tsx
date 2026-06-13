@@ -5,7 +5,6 @@ import type { CSSProperties } from "react";
 import type { Block, TextAlign } from "../lib/types";
 import { reflow } from "../reflow/reflow";
 import { PLACEHOLDER, type ResolvedImage } from "./render-blocks";
-import { priorityImageId } from "./scale";
 
 const TEXT_CLASS: Record<Exclude<Block["type"], "image">, string> = {
   heading: "text-3xl font-bold leading-tight",
@@ -26,17 +25,11 @@ export function MobileStack({
   blocks: Block[];
   resolveImage?: (imageId: string) => ResolvedImage;
 }) {
-  const hero = priorityImageId(blocks);
   return (
     <div className="flex flex-col gap-6">
       {reflow(blocks).map((block) =>
         block.type === "image" ? (
-          <MobileImage
-            key={block.id}
-            block={block}
-            resolveImage={resolveImage}
-            eager={block.id === hero}
-          />
+          <MobileImage key={block.id} block={block} resolveImage={resolveImage} />
         ) : (
           <p
             key={block.id}
@@ -50,14 +43,15 @@ export function MobileStack({
   );
 }
 
+// The reflowed mobile column is never the eager/preloaded hero — that role
+// belongs to the desktop canvas (see ResponsiveCanvas). The top image here is
+// in-viewport, so `lazy` loads it promptly without a competing preload.
 function MobileImage({
   block,
   resolveImage,
-  eager,
 }: {
   block: Block;
   resolveImage?: (imageId: string) => ResolvedImage;
-  eager?: boolean;
 }) {
   const aspect: CSSProperties = { aspectRatio: `${block.width} / ${block.height}` };
   const img = block.imageId ? resolveImage?.(block.imageId) : undefined;
@@ -70,9 +64,8 @@ function MobileImage({
       srcSet={img.srcSet}
       sizes="100vw"
       alt=""
-      loading={eager ? "eager" : "lazy"}
+      loading="lazy"
       decoding="async"
-      fetchPriority={eager ? "high" : "auto"}
       className="block h-auto w-full"
       style={{ ...aspect, background: PLACEHOLDER }}
     />
