@@ -5,8 +5,31 @@
 
 import type { CSSProperties } from "react";
 import { imageSrcSet, imageUrl } from "../images/url";
-import { CANVAS_WIDTH, TEXT_PRESETS, type Block } from "../lib/types";
+import {
+  CANVAS_WIDTH,
+  TEXT_PRESETS,
+  type Block,
+  type TextAlign,
+  type TextPresetKey,
+} from "../lib/types";
 import { canvasHeight, toBoxPercent } from "./scale";
+
+/** The CSS for a text preset, filling its box. Shared by the renderer + editor. */
+export function textPresetStyle(
+  type: TextPresetKey,
+  align: TextAlign = "left",
+): CSSProperties {
+  const preset = TEXT_PRESETS[type];
+  return {
+    width: "100%",
+    height: "100%",
+    fontSize: `${preset.fontSizeCqw}cqw`,
+    fontWeight: preset.fontWeight,
+    lineHeight: preset.lineHeight,
+    textAlign: align,
+    overflow: "hidden",
+  };
+}
 
 export interface ResolvedImage {
   src: string;
@@ -107,20 +130,5 @@ export function BlockContent({
   }
 
   // block.type is narrowed to a text preset key after the image early-return above.
-  const preset = TEXT_PRESETS[block.type];
-  return (
-    <div
-      style={{
-        width: "100%",
-        height: "100%",
-        fontSize: `${preset.fontSizeCqw}cqw`,
-        fontWeight: preset.fontWeight,
-        lineHeight: preset.lineHeight,
-        textAlign: block.align ?? "left",
-        overflow: "hidden",
-      }}
-    >
-      {block.text}
-    </div>
-  );
+  return <div style={textPresetStyle(block.type, block.align)}>{block.text}</div>;
 }

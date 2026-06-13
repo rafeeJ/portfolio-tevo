@@ -1,60 +1,87 @@
-// Persist block layout from the editor. Admin-only (Cloudflare Access in prod).
-// Geometry is validated before it touches D1; the writes go through one batch so
-// a page's layout is saved atomically.
+// Persist a page's full block set from the editor. Admin-only (Cloudflare Access
+// in prod). Validated before it touches D1; the whole save runs as one batch so
+// the page's blocks are reconciled atomically — upsert what's present, delete
+// what's gone.
 import { createServerFn } from "@tanstack/react-start";
+import type { BlockRecord } from "../lib/map";
+import type { BlockType } from "../lib/types";
 import { getDb } from "./env";
 
-export interface BlockLayout {
-  id: string;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  z: number;
-}
-
-export interface SaveLayoutInput {
+export interface SavePageInput {
   pageId: string;
-  blocks: BlockLayout[];
+  blocks: BlockRecord[];
 }
 
-function isFiniteNumber(n: unknown): n is number {
-  return typeof n === "number" && Number.isFinite(n);
-}
+const BLOCK_TYPES: ReadonlySet<BlockType> = new Set([
+  "image",
+  "heading",
+  "subheading",
+  "body",
+]);
 
-function validateLayout(data: SaveLayoutInput): SaveLayoutInput {
+const finite = (n: unknown): n is number => typeof n === "number" && Number.isFinite(n);
+
+function validate(data: SavePageInput): SavePageInput {
   if (typeof data?.pageId !== "string" || !Array.isArray(data.blocks)) {
-    throw new Error("Invalid layout payload");
+    throw new Error("Invalid save payload");
   }
   for (const b of data.blocks) {
     if (
       typeof b.id !== "string" ||
-      !isFiniteNumber(b.x) ||
-      !isFiniteNumber(b.y) ||
-      !isFiniteNumber(b.width) ||
-      !isFiniteNumber(b.height) ||
-      !isFiniteNumber(b.z)
+      !BLOCK_TYPES.has(b.type) ||
+      ![b.x, b.y, b.width, b.height, b.z].every(finite)
     ) {
-      throw new Error(`Invalid block geometry: ${b?.id}`);
+      throw new Error(`Invalid block: ${b?.id}`);
     }
   }
   return data;
 }
 
-export const saveBlockLayout = createServerFn({ method: "POST" })
-  .validator(validateLayout)
+const UPSERT = `INSERT INTO blocks
+  (id, page_id, type, x, y, width, height, z, image_id, text, style, created_at, updated_at)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+  ON CONFLICT(id) DO UPDATE SET
+    type = excluded.type, x = excluded.x, y = excluded.y,
+    width = excluded.width, height = excluded.height, z = excluded.z,
+    image_id = excluded.image_id, text = excluded.text, style = excluded.style,
+    updated_at = excluded.updated_at`;
+
+export const savePage = createServerFn({ method: "POST" })
+  .validator(validate)
   .handler(async ({ data }): Promise<{ saved: number }> => {
-    if (data.blocks.length === 0) return { saved: 0 };
     const db = getDb();
     const now = Date.now();
-    await db.batch(
-      data.blocks.map((b) =>
-        db
-          .prepare(
-            "UPDATE blocks SET x = ?, y = ?, width = ?, height = ?, z = ?, updated_at = ? WHERE id = ? AND page_id = ?",
-          )
-          .bind(b.x, b.y, b.width, b.height, b.z, now, b.id, data.pageId),
-      ),
+    const ids = data.blocks.map((b) => b.id);
+
+    const deleteRemoved =
+      ids.length > 0
+        ? db
+            .prepare(
+              `DELETE FROM blocks WHERE page_id = ? AND id NOT IN (${ids.map(() => "?").join(",")})`,
+            )
+            .bind(data.pageId, ...ids)
+        : db.prepare("DELETE FROM blocks WHERE page_id = ?").bind(data.pageId);
+
+    const upserts = data.blocks.map((b) =>
+      db
+        .prepare(UPSERT)
+        .bind(
+          b.id,
+          data.pageId,
+          b.type,
+          b.x,
+          b.y,
+          b.width,
+          b.height,
+          b.z,
+          b.image_id,
+          b.text,
+          b.style,
+          now,
+          now,
+        ),
     );
+
+    await db.batch([deleteRemoved, ...upserts]);
     return { saved: data.blocks.length };
   });

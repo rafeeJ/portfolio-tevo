@@ -16,13 +16,9 @@ import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { CANVAS_WIDTH, type Block } from "../lib/types";
 import { BlockContent, type ResolvedImage } from "../render/render-blocks";
 import { toBoxPercent } from "../render/scale";
-import {
-  applyDrag,
-  editorCanvasHeight,
-  resizeBlock,
-  type Box,
-  type Corner,
-} from "./geometry";
+import { EditableText } from "./EditableText";
+import { ResizeHandle } from "./ResizeHandle";
+import { applyDrag, editorCanvasHeight, type Box, type Corner } from "./geometry";
 import { computeAlignment, snapDragResult } from "./snap";
 
 const CORNERS: Corner[] = ["nw", "ne", "sw", "se"];
@@ -54,6 +50,7 @@ export function EditorCanvas({
   const ref = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(CANVAS_WIDTH);
   const [guides, setGuides] = useState<Guides>(NO_GUIDES);
+  const [editingId, setEditingId] = useState<string | null>(null);
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
@@ -124,6 +121,12 @@ export function EditorCanvas({
             onUpdate={onUpdate}
             selected={block.id === selectedId}
             onSelect={onSelect}
+            editing={block.id === editingId}
+            onStartEdit={setEditingId}
+            onCommitText={(id, text) => {
+              onUpdate(id, { text });
+              setEditingId(null);
+            }}
           />
         ))}
       </DndContext>
@@ -179,6 +182,9 @@ function DraggableBlock({
   onUpdate,
   selected,
   onSelect,
+  editing,
+  onStartEdit,
+  onCommitText,
 }: {
   block: Block;
   canvasH: number;
@@ -187,9 +193,13 @@ function DraggableBlock({
   onUpdate: (id: string, patch: Partial<Block>) => void;
   selected: boolean;
   onSelect: (id: string | null) => void;
+  editing: boolean;
+  onStartEdit: (id: string) => void;
+  onCommitText: (id: string, text: string) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: block.id,
+    disabled: editing,
   });
   const box = toBoxPercent(block, canvasH);
   const style: CSSProperties = {
@@ -202,13 +212,14 @@ function DraggableBlock({
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
-    cursor: "grab",
+    cursor: editing ? "text" : "grab",
     touchAction: "none",
     outline:
       selected || isDragging
         ? "2px solid #3b82f6"
         : "1px solid rgba(0,0,0,0.08)",
   };
+  const dragProps = editing ? {} : { ...listeners, ...attributes };
   return (
     <div
       ref={setNodeRef}
@@ -218,11 +229,18 @@ function DraggableBlock({
         e.stopPropagation();
         onSelect(block.id);
       }}
-      {...listeners}
-      {...attributes}
+      onDoubleClick={() => {
+        if (block.type !== "image") onStartEdit(block.id);
+      }}
+      {...dragProps}
     >
-      <BlockContent block={block} resolveImage={resolveImage} sizes="40vw" />
+      {editing && block.type !== "image" ? (
+        <EditableText block={block} onCommit={(text) => onCommitText(block.id, text)} />
+      ) : (
+        <BlockContent block={block} resolveImage={resolveImage} sizes="40vw" />
+      )}
       {selected &&
+        !editing &&
         CORNERS.map((corner) => (
           <ResizeHandle
             key={corner}
@@ -237,64 +255,3 @@ function DraggableBlock({
   );
 }
 
-function ResizeHandle({
-  corner,
-  block,
-  scale,
-  canvasH,
-  onResize,
-}: {
-  corner: Corner;
-  block: Block;
-  scale: number;
-  canvasH: number;
-  onResize: (box: Box) => void;
-}) {
-  // Geometry captured at gesture start so the total delta is measured from there.
-  const start = useRef<{ block: Block; x: number; y: number } | null>(null);
-  const lockAspect = block.type === "image";
-  return (
-    <div
-      style={handleStyle(corner)}
-      onPointerDown={(e) => {
-        e.stopPropagation();
-        e.preventDefault();
-        start.current = { block, x: e.clientX, y: e.clientY };
-        e.currentTarget.setPointerCapture(e.pointerId);
-      }}
-      onPointerMove={(e) => {
-        if (!start.current) return;
-        const s = start.current;
-        onResize(
-          resizeBlock(s.block, corner, e.clientX - s.x, e.clientY - s.y, scale, canvasH, lockAspect),
-        );
-      }}
-      onPointerUp={(e) => {
-        start.current = null;
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      }}
-    />
-  );
-}
-
-function handleStyle(corner: Corner): CSSProperties {
-  const size = 12;
-  const off = -size / 2;
-  const base: CSSProperties = {
-    position: "absolute",
-    width: size,
-    height: size,
-    background: "#3b82f6",
-    borderRadius: 2,
-    zIndex: 1001,
-    touchAction: "none",
-  };
-  const east = corner.includes("e");
-  const south = corner.includes("s");
-  return {
-    ...base,
-    [east ? "right" : "left"]: off,
-    [south ? "bottom" : "top"]: off,
-    cursor: east === south ? "nwse-resize" : "nesw-resize",
-  };
-}
