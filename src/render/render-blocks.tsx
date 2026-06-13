@@ -23,6 +23,7 @@ export function textPresetStyle(
   return {
     width: "100%",
     height: "100%",
+    fontFamily: preset.font,
     fontSize: `${preset.fontSizeCqw}cqw`,
     fontWeight: preset.fontWeight,
     lineHeight: preset.lineHeight,

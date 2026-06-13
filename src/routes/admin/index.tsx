@@ -48,34 +48,35 @@ function AdminIndex() {
     }
   };
 
+  const INPUT =
+    "mono mt-1.5 w-full border-2 border-ink bg-paper px-2.5 py-2 text-sm outline-none focus:border-hazard";
+  const LABEL = "mono block text-[10px] uppercase tracking-wider text-ink-soft";
+
   return (
-    <main className="mx-auto w-full max-w-2xl px-6 py-12">
-      <h1 className="mb-6 text-2xl font-bold tracking-tight">Pages</h1>
+    <main className="mx-auto w-full max-w-2xl px-4 py-12 sm:px-6">
+      <p className="mono mb-3 text-[11px] text-ink-soft">[ CONTROL&nbsp;/&nbsp;PAGE&nbsp;REGISTER ]</p>
+      <h1 className="display mb-8 text-[clamp(2.5rem,11vw,5rem)]">Pages</h1>
 
       {tree.length === 0 ? (
-        <p className="text-neutral-500">No pages yet — create one below.</p>
+        <p className="mono text-sm text-ink-soft">
+          <span className="text-hazard">▚</span>&nbsp;&nbsp;NO PAGES — CREATE ONE BELOW.
+        </p>
       ) : (
         <PageTree nodes={tree} />
       )}
 
-      <form
-        onSubmit={submit}
-        className="mt-10 space-y-3 rounded-lg border border-neutral-200 p-5"
-      >
-        <h2 className="text-sm font-semibold">New page</h2>
-        <label className="block text-xs text-neutral-600">
+      <form onSubmit={submit} className="mt-12 space-y-4 border-2 border-ink p-5">
+        <h2 className="mono text-[11px] uppercase tracking-wider">
+          <span className="text-hazard">+</span>&nbsp;New page
+        </h2>
+        <label className={LABEL}>
           Title
-          <input
-            className="mt-1 w-full rounded border border-neutral-300 px-2 py-1.5 text-sm"
-            value={title}
-            onChange={(e) => onTitle(e.target.value)}
-            required
-          />
+          <input className={INPUT} value={title} onChange={(e) => onTitle(e.target.value)} required />
         </label>
-        <label className="block text-xs text-neutral-600">
+        <label className={LABEL}>
           Slug (URL)
           <input
-            className="mt-1 w-full rounded border border-neutral-300 px-2 py-1.5 font-mono text-sm"
+            className={INPUT}
             value={slug}
             onChange={(e) => {
               setSlug(e.target.value);
@@ -84,14 +85,14 @@ function AdminIndex() {
             required
           />
         </label>
-        <label className="block text-xs text-neutral-600">
-          Parent (optional — makes it a subpage)
+        <label className={LABEL}>
+          Parent — optional, makes it a subpage
           <select
-            className="mt-1 w-full rounded border border-neutral-300 px-2 py-1.5 text-sm"
+            className={INPUT}
             value={parentId}
             onChange={(e) => setParentId(e.target.value)}
           >
-            <option value="">— Top level —</option>
+            <option value="">— TOP LEVEL —</option>
             {pages.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.title}
@@ -100,16 +101,16 @@ function AdminIndex() {
           </select>
         </label>
         {error && (
-          <p className="text-xs text-red-600" role="alert">
-            {error}
+          <p className="mono text-[11px] text-hazard" role="alert">
+            ! {error}
           </p>
         )}
         <button
           type="submit"
           disabled={creating || !title || !slug}
-          className="rounded bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-40"
+          className="mono border-2 border-ink bg-ink px-4 py-2 text-[11px] uppercase tracking-wider text-paper transition-colors disabled:opacity-30 enabled:hover:bg-hazard enabled:hover:border-hazard"
         >
-          {creating ? "Creating…" : "Create page"}
+          {creating ? "Creating…" : "Create page ▸"}
         </button>
       </form>
     </main>
@@ -118,21 +119,19 @@ function AdminIndex() {
 
 function PageTree({ nodes }: { nodes: TreeNode[] }) {
   return (
-    <ul className="space-y-1">
+    <ul className="border-t-2 border-ink">
       {nodes.map((node) => (
         <li key={node.page.id}>
           <Link
             to="/admin/p/$id"
             params={{ id: node.page.id }}
-            className="text-sm underline-offset-4 hover:underline"
+            className="lk flex items-baseline justify-between gap-3 border-b border-ink px-1 py-3 hover:bg-paper-2"
           >
-            {node.page.title}
+            <span className="mono text-sm uppercase tracking-wide">{node.page.title}</span>
+            <span className="mono text-[10px] text-ink-soft">/p/{node.page.slug}&nbsp;→</span>
           </Link>
-          <span className="ml-2 font-mono text-xs text-neutral-400">
-            /p/{node.page.slug}
-          </span>
           {node.children.length > 0 && (
-            <div className="mt-1 ml-4 border-l border-neutral-200 pl-3">
+            <div className="ml-4 border-l-2 border-hazard pl-3">
               <PageTree nodes={node.children} />
             </div>
           )}
