@@ -1,7 +1,9 @@
 // D1 row types — mirror migrations/0001_init.sql. See docs/SPEC.md "Data Model".
 // Timestamps are epoch ms; `published` is 0|1 (SQLite has no bool).
 
-export type BlockType = "image" | "heading" | "subheading" | "body";
+import type { BlockType } from "../lib/types";
+
+export type { BlockType };
 
 export interface PageRow {
   id: string;
