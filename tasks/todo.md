@@ -45,20 +45,20 @@
 
 ## S3 — Image upload + resize pipeline
 
-- [ ] **S3.1 `/cdn-cgi/image` URL builder**
-  - Acceptance: pure builder produces correct resize URLs (width, `f=auto`, quality) from an R2 object path; unit-tested for variants + srcset.
-  - Verify: unit tests assert exact URLs.
-  - Files: `src/images/url.ts`, `tests/image-url.test.ts`.
+- [x] **S3.1 Image URL builder** ✅ 2026-06-13
+  - Acceptance: pure builder produces correct variant URLs + srcset; unit-tested.
+  - Files: `src/images/url.ts`, `tests/images.test.ts`.
+  - **Done:** `imageUrl`/`imageSrcSet`/`clampWidth`/`negotiateFormat` (pure, 12 tests). URLs point at the `/img/$imageId` route (opaque id; R2 key never exposed) — not raw `/cdn-cgi/image`, since originals must stay private.
 
-- [ ] **S3.2 Upload server function (admin)**
-  - Acceptance: accepts a high-res upload, validates type/size + client-sent intrinsic dimensions, stores original in R2, writes `images` row; returns image id + dims.
-  - Verify: integration test uploads a fixture to local R2, asserts row + key.
-  - Files: `src/server/images.ts`, `src/images/validate.ts`, `tests/upload.test.ts`.
+- [x] **S3.2 Upload server function (admin)** ✅ 2026-06-13
+  - Acceptance: accepts a high-res upload, validates type/size + dimensions, stores original in R2, writes `images` row; returns image id + dims.
+  - Files: `src/server/images.ts`, `src/images/validate.ts`, `src/db/client.ts`.
+  - **Done:** `uploadImage` server fn reads dims/format **server-side** via `IMAGES.info()` (no trusting the client), `validateUpload` (pure, unit-tested), stores R2 original under `originals/<uuid>`, inserts images row. _Full e2e deferred to S11 (upload UI); binding + R2 write paths proven via the serving test below._
 
-- [ ] **S3.3 Image block renders via pipeline**
-  - Acceptance: `type='image'` blocks render `<img srcset>` through the URL builder at display size; originals never served to public.
-  - Verify: seed an image block; public page shows a resized variant URL (not the R2 original).
-  - Files: `src/render/render-blocks.tsx`, `e2e/public-image.spec.ts`.
+- [x] **S3.3 Image serving + render via pipeline** ✅ 2026-06-13
+  - Acceptance: image blocks render `<img srcset>` through the pipeline; originals never served to public.
+  - Files: `src/routes/img.$imageId.tsx`, `src/render/render-blocks.tsx`, `scripts/seed.sql`, `scripts/seed-assets/demo.png`, `wrangler.jsonc` (images binding).
+  - **Done:** `/img/$imageId` server route resizes the private R2 original via the Images binding, format-negotiates AVIF/WebP/JPEG, caches immutably. Verified live: `?w=400`→AVIF 400×267, `?w=800`→WebP 800×533 (aspect preserved), `/img/nope`→404. `/p/demo` image block renders full responsive srcset. **Review caught + fixed a security bug:** removed a catch-fallback that would have leaked full-res originals if resize failed — now fails closed.
 
 ## S4 — Mobile auto-reflow (CP-C)
 

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as PSlugRouteImport } from './routes/p.$slug'
+import { Route as ImgImageIdRouteImport } from './routes/img.$imageId'
 
 const AboutRoute = AboutRouteImport.update({
   id: '/about',
@@ -28,34 +29,43 @@ const PSlugRoute = PSlugRouteImport.update({
   path: '/p/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ImgImageIdRoute = ImgImageIdRouteImport.update({
+  id: '/img/$imageId',
+  path: '/img/$imageId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/about': typeof AboutRoute
+  '/img/$imageId': typeof ImgImageIdRoute
   '/p/$slug': typeof PSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/about' | '/p/$slug'
+  fullPaths: '/' | '/about' | '/img/$imageId' | '/p/$slug'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/about' | '/p/$slug'
-  id: '__root__' | '/' | '/about' | '/p/$slug'
+  to: '/' | '/about' | '/img/$imageId' | '/p/$slug'
+  id: '__root__' | '/' | '/about' | '/img/$imageId' | '/p/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AboutRoute: typeof AboutRoute
+  ImgImageIdRoute: typeof ImgImageIdRoute
   PSlugRoute: typeof PSlugRoute
 }
 
@@ -82,12 +92,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/img/$imageId': {
+      id: '/img/$imageId'
+      path: '/img/$imageId'
+      fullPath: '/img/$imageId'
+      preLoaderRoute: typeof ImgImageIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AboutRoute: AboutRoute,
+  ImgImageIdRoute: ImgImageIdRoute,
   PSlugRoute: PSlugRoute,
 }
 export const routeTree = rootRouteImport
