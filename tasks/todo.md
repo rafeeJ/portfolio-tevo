@@ -95,10 +95,11 @@
   - Files: `src/editor/geometry.ts` (resizeBlock), `src/editor/EditorCanvas.tsx` (corner handles), `src/editor/model.ts` (updateBlock), `tests/geometry.test.ts`.
   - **Done:** pure `resizeBlock` (anchor + aspect-lock + clamp; 5 tests). Corner handles use raw pointer events + `stopPropagation` (no dnd-kit conflict) — **deviation from specced interact.js**, flagged; avoids two libs fighting for pointer events. Model generalized to `updateBlock(id, patch)`. **Verified in browser (MCP):** resized image 600×400→699×466 (aspect 1.50 held) → Save → D1 persists. **Note:** interact.js not used (raw handles instead); handles always-visible pending selection (~S9).
 
-- [ ] **S8 Snap-to-grid + smart guides**
+- [x] **S8 Snap-to-grid + smart guides** ✅ 2026-06-13
   - Acceptance: toggle enables 8px snap + edge/center alignment guides; off = free placement.
   - Verify: e2e — with snap on, dropped block lands on grid; guides appear on alignment.
-  - Files: `src/editor/snap.ts`, `src/editor/Guides.tsx`, `tests/snap.test.ts`.
+  - Files: `src/editor/snap.ts`, `src/editor/EditorCanvas.tsx` (onDragMove guides + GuideLines), `src/routes/admin/p.$id.tsx` (Snap toggle), `tests/snap.test.ts`.
+  - **Done:** pure `snapToGrid` + `computeAlignment` (edge/center vs siblings) + `snapDragResult` (alignment priority, grid fallback; 8 tests). Live guides during drag (`onDragMove` → pink lines), snap-on-drop, `Snap` checkbox gate. **Verified in browser (MCP):** snap-ON drag produced exact center-alignment (20,195) to the subheading; toggle works. _Note: couldn't cleanly isolate grid-vs-free in-browser (MCP drag always center-aligns; synthetic events don't drive dnd-kit) — relied on the 8 unit tests + observed alignment wiring._
 
 - [ ] **S9 Z-order controls**
   - Acceptance: bring-forward / send-back reorder `z`; overlap respects order; persists.

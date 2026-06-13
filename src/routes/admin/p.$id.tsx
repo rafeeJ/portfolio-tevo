@@ -19,6 +19,7 @@ function Editor() {
   const { page, blocks } = Route.useLoaderData();
   const model = useEditorModel(blocks);
   const [saving, setSaving] = useState(false);
+  const [snap, setSnap] = useState(true);
 
   const save = async () => {
     setSaving(true);
@@ -49,6 +50,14 @@ function Editor() {
           Editing: {page.title}
         </span>
         <div className="flex items-center gap-3">
+          <label className="flex items-center gap-1.5 text-xs text-neutral-600">
+            <input
+              type="checkbox"
+              checked={snap}
+              onChange={(e) => setSnap(e.target.checked)}
+            />
+            Snap
+          </label>
           <span className="text-xs text-neutral-400">
             {model.dirty ? "unsaved changes" : "saved"}
           </span>
@@ -67,6 +76,7 @@ function Editor() {
           blocks={model.blocks}
           resolveImage={pipelineImageResolver}
           onUpdate={model.updateBlock}
+          snap={snap}
         />
       </div>
     </div>
