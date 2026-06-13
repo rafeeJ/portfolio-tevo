@@ -1,14 +1,26 @@
 // The editor's app-owned layout model — the single source of truth for blocks
-// while editing. dnd-kit / interact.js feed mutations into here (S6+); the DOM
-// is never authoritative. S5 is read-only, so it just holds the loaded blocks.
-import { useState } from "react";
+// while editing. dnd-kit / interact.js feed mutations into here; the DOM is
+// never authoritative. `dirty` tracks unsaved changes.
+import { useCallback, useState } from "react";
 import type { Block } from "../lib/types";
 
 export interface EditorModel {
   blocks: Block[];
+  dirty: boolean;
+  setPosition: (id: string, x: number, y: number) => void;
+  markSaved: () => void;
 }
 
 export function useEditorModel(initial: Block[]): EditorModel {
-  const [blocks] = useState(initial);
-  return { blocks };
+  const [blocks, setBlocks] = useState(initial);
+  const [dirty, setDirty] = useState(false);
+
+  const setPosition = useCallback((id: string, x: number, y: number) => {
+    setBlocks((bs) => bs.map((b) => (b.id === id ? { ...b, x, y } : b)));
+    setDirty(true);
+  }, []);
+
+  const markSaved = useCallback(() => setDirty(false), []);
+
+  return { blocks, dirty, setPosition, markSaved };
 }
