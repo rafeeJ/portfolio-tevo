@@ -13,6 +13,8 @@
 		"typecheck": "tsc --noEmit",
 		"test": "vitest run",
 		"test:watch": "vitest",
+		"db:migrate": "wrangler d1 migrations apply tevo-db --local",
+		"db:migrate:remote": "wrangler d1 migrations apply tevo-db --remote",
 		"deploy": "pnpm run build && wrangler deploy",
 		"cf-typegen": "wrangler types"
 	},
