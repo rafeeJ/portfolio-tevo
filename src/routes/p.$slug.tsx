@@ -1,12 +1,7 @@
 import { createFileRoute, notFound } from "@tanstack/react-router";
-import { imageSrcSet, imageUrl } from "../images/url";
+import { pipelineImageResolver } from "../render/render-blocks";
 import { ResponsiveCanvas } from "../render/responsive-canvas";
 import { loadPageBySlug } from "../server/pages";
-
-const resolveImage = (imageId: string) => ({
-  src: imageUrl(imageId),
-  srcSet: imageSrcSet(imageId),
-});
 
 export const Route = createFileRoute("/p/$slug")({
   loader: async ({ params }) => {
@@ -23,7 +18,7 @@ function PageView() {
   const { blocks } = Route.useLoaderData();
   return (
     <main className="mx-auto w-full max-w-[1440px] px-4 py-10">
-      <ResponsiveCanvas blocks={blocks} resolveImage={resolveImage} />
+      <ResponsiveCanvas blocks={blocks} resolveImage={pipelineImageResolver} />
     </main>
   );
 }

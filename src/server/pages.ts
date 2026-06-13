@@ -1,7 +1,12 @@
 // Server functions for public page reads. These always run server-side, so the
 // D1 binding (via getDb) is available even during client-side navigation.
 import { createServerFn } from "@tanstack/react-start";
-import { getPageBySlug, listBlocks, listPages } from "../db/client";
+import {
+  getPageById,
+  getPageBySlug,
+  listBlocks,
+  listPages,
+} from "../db/client";
 import { rowToBlock } from "../lib/map";
 import { getDb } from "./env";
 import type { Block } from "../lib/types";
@@ -10,6 +15,15 @@ import type { PageRow } from "../db/schema";
 export interface PageData {
   page: PageRow;
   blocks: Block[];
+}
+
+/** A page plus its blocks (render model). Shared by the public + editor loaders. */
+async function pageWithBlocks(
+  db: D1Database,
+  page: PageRow,
+): Promise<PageData> {
+  const rows = await listBlocks(db, page.id);
+  return { page, blocks: rows.map(rowToBlock) };
 }
 
 /** Published pages (flat) for the public browsable index; caller builds the tree. */
@@ -25,7 +39,14 @@ export const loadPageBySlug = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }): Promise<PageData | null> => {
     const db = getDb();
     const page = await getPageBySlug(db, slug);
-    if (!page) return null;
-    const rows = await listBlocks(db, page.id);
-    return { page, blocks: rows.map(rowToBlock) };
+    return page ? pageWithBlocks(db, page) : null;
+  });
+
+/** Load a page by id for the admin editor (gated by Cloudflare Access in prod). */
+export const loadEditorPage = createServerFn({ method: "GET" })
+  .validator((id: string) => id)
+  .handler(async ({ data: id }): Promise<PageData | null> => {
+    const db = getDb();
+    const page = await getPageById(db, id);
+    return page ? pageWithBlocks(db, page) : null;
   });

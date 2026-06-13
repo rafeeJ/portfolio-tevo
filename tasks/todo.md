@@ -77,10 +77,11 @@
 
 ## S5–S13 — Canvas editor (behind local /admin; CP-D)
 
-- [ ] **S5 Editor shell**
+- [x] **S5 Editor shell** ✅ 2026-06-13
   - Acceptance: `/admin/p/:id` loads a page's blocks into an app-owned layout model (single source of truth) and renders them read-only on the canvas via the shared renderer.
   - Verify: open editor for seeded page; blocks match public render.
-  - Files: `src/routes/admin/p.$id.tsx`, `src/editor/model.ts`, `src/editor/Canvas.tsx`.
+  - Files: `src/routes/admin/p.$id.tsx`, `src/editor/model.ts`, `src/server/pages.ts` (loadEditorPage), `src/db/client.ts` (getPageById).
+  - **Done:** `/admin/p/$id` loads via `loadEditorPage` into `useEditorModel` (SoT seam, grows in S6), renders read-only via shared `CanvasStage`. Verified live: matches public render (canvas + image pipeline + text), bad id → 404. Review: factored `pageWithBlocks` (shared loader helper) + canonical `pipelineImageResolver` (killed a duplicate).
 
 - [ ] **S6 Drag + persist**
   - Acceptance: drag a block (dnd-kit) updates the model; Save persists new x/y to D1; reload shows moved block.

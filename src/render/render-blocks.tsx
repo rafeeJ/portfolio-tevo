@@ -4,12 +4,18 @@
 // with no JS viewport measurement. The pure math lives in ./scale.ts.
 
 import type { CSSProperties } from "react";
+import { imageSrcSet, imageUrl } from "../images/url";
 import { CANVAS_WIDTH, TEXT_PRESETS, type Block } from "../lib/types";
 import { canvasHeight, toBoxPercent } from "./scale";
 
 export interface ResolvedImage {
   src: string;
   srcSet?: string;
+}
+
+/** Default resolver: serve images through the /img resize pipeline. */
+export function pipelineImageResolver(imageId: string): ResolvedImage {
+  return { src: imageUrl(imageId), srcSet: imageSrcSet(imageId) };
 }
 
 export interface CanvasStageProps {
