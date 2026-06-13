@@ -31,6 +31,14 @@ Notes:
 - `/thermo-nuclear-code-quality-review` is the user's deep review pass. **The harness blocks agents from auto-invoking it** (`disable-model-invocation`), so apply its rubric inline (be transparent that you're doing so) or ask the user to run it; `/deslop` *can* be invoked normally.
 - `main` stays releasable; the initial scaffold (F0.1) and bindings (F0.2) baseline live there. Everything after branches.
 
+## Deploy = CI (Workers Builds), not manual
+
+The GitHub repo is connected to the `tevo` Worker via **Cloudflare Workers Builds**. **Pushing `main` auto-builds and deploys.** Do **not** run `pnpm deploy` by hand any more — it races the CI deploy. Just `git push` and watch the build.
+
+- Dashboard build config (Worker → Settings → Builds): **Build command** `pnpm run build`, **Deploy command** `npx wrangler deploy`. Package manager auto-detected as pnpm from `pnpm-lock.yaml` (pinned via `packageManager` in `package.json`).
+- ⚠️ **CI does not run D1 migrations.** `wrangler deploy` ships code only. When a change adds a migration, run `pnpm db:migrate:remote` yourself (before or right after the deploy), or the remote schema drifts. No auto-migrate in the build.
+- Inspect builds with the `cloudflare-builds` MCP tools (`workers_builds_list_builds` / `_get_build_logs`), Worker id `c7e3c632322f446caac2d64157eb9f5a`.
+
 ## Stack (decided — do not swap without asking)
 
 - **Framework:** TanStack Start (React, SSR + server functions) on **Cloudflare Workers**.
