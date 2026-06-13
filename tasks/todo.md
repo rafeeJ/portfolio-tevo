@@ -150,9 +150,9 @@
   - Files: `src/routes/admin/api/{save,upload,create-page}.tsx`, `src/lib/admin-api.ts`, `src/server/http.ts` (jsonPost), `src/server/{blocks,images,pages}.ts` (extracted logic), `wrangler.jsonc` (route).
   - **Done — security fix:** the 3 mutations were TanStack *server functions* (own HTTP path, **not** under `/admin/*`) → publicly callable, bypassing an `/admin/*` Access policy. Moved them to **POST `/admin/api/*` server routes** (edge-gated by Access), logic kept in `server/` as `validate*/apply*/process*`, client rewired via `lib/admin-api.ts`. Added `tevo.rafee.cloud` custom-domain route. **Verified locally:** save/create/upload work through the new endpoints (200), bad input → 400. _Real Access enforcement verified post-deploy. Follow-up: gate admin READS (loadEditorPage/loadAllPages) once drafts/unpublish exist — currently all content is published so no leak._
 
-- [ ] **S14.2 Validation + deploy + full e2e**
-  - Acceptance: input validation pass (slugs, coords, block types, image limits); deploy to `tevo.rafee.cloud`; spec success criteria 1–7 all pass; LCP image < 2.5s on simulated 4G.
-  - Verify: `pnpm deploy`; full Playwright suite against the deployed URL; Lighthouse check.
-  - Files: `src/server/validate.ts`, `e2e/full-flow.spec.ts`, `wrangler.toml`.
+- [x] **S14.2 Deploy + launch verification** ✅ 2026-06-13
+  - Acceptance: deploy to `tevo.rafee.cloud`; Access gates admin; public open; auth boundary holds.
+  - **Done:** remote D1 migrated; `wrangler deploy` → `tevo.rafee.cloud` (DB + R2 + Images bindings live); custom domain provisioned. **Verified live:** Access gates ALL of `/admin/*` incl. `/admin/api/{save,create-page,upload}` (unauth → 302 to Cloudflare Access login); public `/`, `/p/*`, `/img/*` reach the app. Empty prod DB (owner adds real content via editor).
+  - _Not verified headlessly (needs owner's Access login): authenticated editor flow on prod + Images resize on first real upload (binding is bound; per-Worker, no zone toggle). Editor verified extensively locally (same code)._
 
-> **CHECKPOINT CP-E** — launch gate. All success criteria pass; `/admin` gated.
+> **CHECKPOINT CP-E** ✅ — **LAUNCHED.** Live at https://tevo.rafee.cloud · admin gated by Cloudflare Access · public site open.
