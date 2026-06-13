@@ -116,6 +116,7 @@
   - Acceptance: admin can create a page or subpage (title, slug, optional parent); slug validated/unique; appears in index.
   - Verify: e2e — create subpage, see it nested in index, open its editor.
   - Files: `src/routes/admin/index.tsx`, `src/server/pages.ts`, `src/lib/slug.ts`, `e2e/create-page.spec.ts`.
+  - ⚠️ **Deletes must cascade in app code** — D1 doesn't enforce FK `ON DELETE CASCADE`. When page delete lands, delete child pages + blocks explicitly via `db.batch([...])` (see migration note / SPEC D1 caveat).
 
 > **CHECKPOINT CP-D** — full editor works locally. Review.
 

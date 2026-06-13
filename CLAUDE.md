@@ -15,6 +15,22 @@ A custom, self-hosted **photo-portfolio website + admin app**, built end-to-end 
 
 Keep these alive: if a decision changes, update the spec first, then code.
 
+## Git workflow (REQUIRED for all work)
+
+**Never commit feature work directly to `main`.** For each task (or small task group):
+
+1. **Branch** off `main`: `git checkout -b task/<slug>` (e.g. `task/s4-reflow`).
+2. **Implement** the task to its Definition of Done (typecheck + tests green).
+3. **Quality gate before merge — both, in order:**
+   - Run **`/thermo-nuclear-code-quality-review`** on the branch and address findings.
+   - Run **`/deslop`** to strip AI-slop / clean style.
+4. **Check in with the human** if the review surfaces any open questions or judgment calls — don't merge through ambiguity.
+5. **Merge back into `main`** (no PR required): `git checkout main && git merge --no-ff task/<slug>`, then push. Delete the branch.
+
+Notes:
+- `/thermo-nuclear-code-quality-review` is the user's deep review pass; if that exact command isn't available, fall back to `/code-review high` and say so.
+- `main` stays releasable; the initial scaffold (F0.1) and bindings (F0.2) baseline live there. Everything after branches.
+
 ## Stack (decided — do not swap without asking)
 
 - **Framework:** TanStack Start (React, SSR + server functions) on **Cloudflare Workers**.
