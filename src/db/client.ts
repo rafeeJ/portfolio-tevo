@@ -26,6 +26,33 @@ export async function getPageById(
   return db.prepare("SELECT * FROM pages WHERE id = ?").bind(id).first<PageRow>();
 }
 
+/** Insert a page, placing it after its current siblings (`parent_id IS ?` is
+ *  SQLite null-safe equality, so it matches top-level pages when parent is null). */
+export async function insertPage(
+  db: D1Database,
+  page: Omit<PageRow, "sort_order">,
+): Promise<void> {
+  const sib = await db
+    .prepare("SELECT COALESCE(MAX(sort_order), -1) + 1 AS next FROM pages WHERE parent_id IS ?")
+    .bind(page.parent_id)
+    .first<{ next: number }>();
+  await db
+    .prepare(
+      "INSERT INTO pages (id, parent_id, slug, title, sort_order, published, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    )
+    .bind(
+      page.id,
+      page.parent_id,
+      page.slug,
+      page.title,
+      sib?.next ?? 0,
+      page.published,
+      page.created_at,
+      page.updated_at,
+    )
+    .run();
+}
+
 export async function getImageById(
   db: D1Database,
   id: string,

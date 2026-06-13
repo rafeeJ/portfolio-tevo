@@ -28,7 +28,7 @@ Keep these alive: if a decision changes, update the spec first, then code.
 5. **Merge back into `main`** (no PR required): `git checkout main && git merge --no-ff task/<slug>`, then push. Delete the branch.
 
 Notes:
-- `/thermo-nuclear-code-quality-review` is the user's deep review pass; if that exact command isn't available, fall back to `/code-review high` and say so.
+- `/thermo-nuclear-code-quality-review` is the user's deep review pass. **The harness blocks agents from auto-invoking it** (`disable-model-invocation`), so apply its rubric inline (be transparent that you're doing so) or ask the user to run it; `/deslop` *can* be invoked normally.
 - `main` stays releasable; the initial scaffold (F0.1) and bindings (F0.2) baseline live there. Everything after branches.
 
 ## Stack (decided — do not swap without asking)
