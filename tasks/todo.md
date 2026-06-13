@@ -71,7 +71,7 @@
   - Acceptance: viewport < breakpoint renders reflowed single column; no horizontal scroll; images aspect-correct.
   - Files: `src/render/mobile-stack.tsx`, `src/render/responsive-canvas.tsx`, `src/routes/p.$slug.tsx`.
   - **Done:** `MobileStack` (flex column, full-width images via CSS aspect-ratio, readable text sizes) + `ResponsiveCanvas` (CSS `md:` breakpoint toggle, no JS, SSR-safe). Verified live: `/p/demo` mobile = heading→subheading→body→image in reading order, `100vw` images.
-  - ⚠️ **Launch-perf note (S14):** render-both-toggle-CSS means a browser may fetch image variants for the hidden layout. Acceptable for v1; revisit at S14 if LCP suffers (JS switch or single-`<picture>` approach).
+  - ✅ **Launch-perf (resolved 2026-06-13):** `loading="lazy"` on all but the desktop hero means the hidden layout (`display:none`) no longer fetches its image copies (lazy never intersects), killing the double-fetch. The topmost image loads eager + `fetchpriority="high"` (React 19 hoists a single preload); others defer below the fold. A `paper-2` placeholder block sits behind each image (no pop-in), and `sizes="min(Nvw, Npx)"` caps requested variants at the canvas render width so wide viewports don't trigger oversized cold transforms. Helpers `priorityImageId`/`imageSizes` in `render/scale.ts`, unit + render tested.
 
 > **CHECKPOINT CP-C** ✅ — public read-path complete (render + images + mobile reflow).
 
