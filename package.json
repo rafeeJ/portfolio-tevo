@@ -15,6 +15,7 @@
 		"test:watch": "vitest",
 		"db:migrate": "wrangler d1 migrations apply tevo-db --local",
 		"db:migrate:remote": "wrangler d1 migrations apply tevo-db --remote",
+		"db:seed": "wrangler d1 execute tevo-db --local --file scripts/seed.sql",
 		"deploy": "pnpm run build && wrangler deploy",
 		"cf-typegen": "wrangler types"
 	},

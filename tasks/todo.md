@@ -11,24 +11,27 @@
   - Files: `package.json`, `vite.config.ts`, `wrangler.toml`, `src/routes/index.tsx`.
   - **Done:** Scaffolded via C3 `--framework=tanstack-start` (Cloudflare Vite plugin, not the legacy preset). Verified: `pnpm build` ✅, `pnpm typecheck` ✅ (exit 0), `pnpm dev` serves `/` and `/about` (HTTP 200, SSR). Worker named `tevo`, compat date 2026-06-13 + `nodejs_compat`, `main: @tanstack/react-start/server-entry`. Added `typecheck`/`test:watch` scripts; moved pnpm `allowBuilds` to `pnpm-workspace.yaml`.
 
-- [ ] **F0.2 Bindings + migration**
+- [x] **F0.2 Bindings + migration** ✅ 2026-06-13
   - Acceptance: local D1 (`DB`) + R2 (`BUCKET`) bound; migration creates `pages`, `blocks`, `images` per spec schema; query helper connects.
   - Verify: `pnpm db:migrate` (local) succeeds; a smoke query in an integration test returns empty sets.
-  - Files: `wrangler.toml`, `migrations/0001_init.sql`, `src/db/schema.ts`, `src/db/client.ts`.
+  - Files: `wrangler.jsonc`, `migrations/0001_init.sql`, `src/db/schema.ts`, `src/db/client.ts`, `src/server/env.ts`.
+  - **Done:** D1 `tevo-db` (`f4a0f12f…`) + R2 `tevo-photos` bound as `DB`/`BUCKET`; `0001_init.sql` applied to local D1 (smoke: tables exist, counts = 0). Typed row types + query helpers + server-only binding seam. Review documented D1's no-FK-cascade behavior (see migration/SPEC/S13). **Deferred:** `--remote` migration + first deploy (launch track).
 
-> **CHECKPOINT CP-A** — review before slices begin.
+> **CHECKPOINT CP-A** — local foundation complete; remote migration + deploy deferred to launch track.
 
 ## S1 — Render a seeded page (CP-B start)
 
-- [ ] **S1.1 Block/page types + shared renderer**
+- [x] **S1.1 Block/page types + shared renderer** ✅ 2026-06-13
   - Acceptance: `Block` type + `renderBlocks()` produce absolutely-positioned DOM scaled within a 1440px canvas container; pure scaling math unit-tested.
   - Verify: unit tests for scaling at 1440/1024/390 widths.
-  - Files: `src/lib/types.ts`, `src/render/render-blocks.tsx`, `tests/render.test.ts`.
+  - Files: `src/lib/types.ts`, `src/render/scale.ts`, `src/render/render-blocks.tsx`, `tests/scale.test.ts`, `vitest.config.ts`.
+  - **Done:** `Block`/`CANVAS_WIDTH`/`TEXT_PRESETS` in lib/types; pure `canvasHeight`/`toBoxPercent` in render/scale (10 unit tests); `CanvasStage` renders pure-CSS-responsive (aspect-ratio + % positioning + `cqw` text via `container-type`). Dedup'd `BlockType` into lib/types.
 
-- [ ] **S1.2 Public page route + seed**
+- [x] **S1.2 Public page route + seed** ✅ 2026-06-13
   - Acceptance: `/p/:slug` SSR-loads a page's blocks from D1 and renders them; a seed script inserts one demo page with mixed blocks.
   - Verify: `pnpm db:seed` then visit `/p/demo` → blocks appear positioned correctly.
-  - Files: `src/routes/p.$slug.tsx`, `src/server/pages.ts`, `scripts/seed.ts`.
+  - Files: `src/routes/p.$slug.tsx`, `src/server/pages.ts`, `src/lib/map.ts`, `scripts/seed.sql`.
+  - **Done:** `loadPageBySlug` server fn (D1 via getDb) + `rowToBlock` mapper + `/p/$slug` SSR route. Verified live: `/p/demo` SSR-renders 5 seeded blocks at correct % positions (aspect-ratio 1440/1180), text presets at 4.2/2.6/1.4cqw, `/p/nope` → 404.
 
 ## S2 — Browsable index (CP-B)
 
