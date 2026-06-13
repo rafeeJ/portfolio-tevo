@@ -12,7 +12,11 @@ import {
   type TextAlign,
   type TextPresetKey,
 } from "../lib/types";
-import { canvasHeight, toBoxPercent } from "./scale";
+import { canvasHeight, imageSizes, priorityImageId, toBoxPercent } from "./scale";
+
+/** Loading placeholder shown behind an image until its pixels paint — no JS,
+ *  SSR-safe: the opaque photo simply covers this block once decoded. */
+export const PLACEHOLDER = "var(--color-paper-2)";
 
 /** The CSS for a text preset, filling its box. Shared by the renderer + editor. */
 export function textPresetStyle(
@@ -51,6 +55,7 @@ export interface CanvasStageProps {
 
 export function CanvasStage({ blocks, resolveImage }: CanvasStageProps) {
   const h = canvasHeight(blocks);
+  const hero = priorityImageId(blocks);
   const stageStyle: CSSProperties = {
     position: "relative",
     width: "100%",
@@ -67,6 +72,7 @@ export function CanvasStage({ blocks, resolveImage }: CanvasStageProps) {
             block={block}
             canvasH={h}
             resolveImage={resolveImage}
+            eager={block.id === hero}
           />
         ))}
     </div>
@@ -77,10 +83,12 @@ function BlockView({
   block,
   canvasH,
   resolveImage,
+  eager,
 }: {
   block: Block;
   canvasH: number;
   resolveImage?: (imageId: string) => ResolvedImage;
+  eager?: boolean;
 }) {
   const box = toBoxPercent(block, canvasH);
   const base: CSSProperties = {
@@ -96,7 +104,8 @@ function BlockView({
       <BlockContent
         block={block}
         resolveImage={resolveImage}
-        sizes={`${Math.round(box.width)}vw`}
+        sizes={imageSizes(box.width)}
+        eager={eager}
       />
     </div>
   );
@@ -110,10 +119,13 @@ export function BlockContent({
   block,
   resolveImage,
   sizes,
+  eager,
 }: {
   block: Block;
   resolveImage?: (imageId: string) => ResolvedImage;
   sizes?: string;
+  /** Load this image eagerly at high priority (the hero); others lazy-load. */
+  eager?: boolean;
 }) {
   if (block.type === "image") {
     const img = block.imageId ? resolveImage?.(block.imageId) : undefined;
@@ -123,10 +135,19 @@ export function BlockContent({
         srcSet={img.srcSet}
         sizes={sizes}
         alt=""
-        style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        loading={eager ? "eager" : "lazy"}
+        decoding="async"
+        fetchPriority={eager ? "high" : "auto"}
+        style={{
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          display: "block",
+          background: PLACEHOLDER,
+        }}
       />
     ) : (
-      <div style={{ width: "100%", height: "100%", background: "#e5e5e5" }} />
+      <div style={{ width: "100%", height: "100%", background: PLACEHOLDER }} />
     );
   }
 
