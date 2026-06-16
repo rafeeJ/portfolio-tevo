@@ -15,6 +15,7 @@ import { Route as PSlugRouteImport } from './routes/p.$slug'
 import { Route as ImgImageIdRouteImport } from './routes/img.$imageId'
 import { Route as AdminPIdRouteImport } from './routes/admin/p.$id'
 import { Route as AdminApiUploadRouteImport } from './routes/admin/api/upload'
+import { Route as AdminApiSetPublishedRouteImport } from './routes/admin/api/set-published'
 import { Route as AdminApiSaveRouteImport } from './routes/admin/api/save'
 import { Route as AdminApiCreatePageRouteImport } from './routes/admin/api/create-page'
 
@@ -48,6 +49,11 @@ const AdminApiUploadRoute = AdminApiUploadRouteImport.update({
   path: '/admin/api/upload',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminApiSetPublishedRoute = AdminApiSetPublishedRouteImport.update({
+  id: '/admin/api/set-published',
+  path: '/admin/api/set-published',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminApiSaveRoute = AdminApiSaveRouteImport.update({
   id: '/admin/api/save',
   path: '/admin/api/save',
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/admin/': typeof AdminIndexRoute
   '/admin/api/create-page': typeof AdminApiCreatePageRoute
   '/admin/api/save': typeof AdminApiSaveRoute
+  '/admin/api/set-published': typeof AdminApiSetPublishedRoute
   '/admin/api/upload': typeof AdminApiUploadRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminIndexRoute
   '/admin/api/create-page': typeof AdminApiCreatePageRoute
   '/admin/api/save': typeof AdminApiSaveRoute
+  '/admin/api/set-published': typeof AdminApiSetPublishedRoute
   '/admin/api/upload': typeof AdminApiUploadRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/admin/': typeof AdminIndexRoute
   '/admin/api/create-page': typeof AdminApiCreatePageRoute
   '/admin/api/save': typeof AdminApiSaveRoute
+  '/admin/api/set-published': typeof AdminApiSetPublishedRoute
   '/admin/api/upload': typeof AdminApiUploadRoute
   '/admin/p/$id': typeof AdminPIdRoute
 }
@@ -99,6 +108,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/api/create-page'
     | '/admin/api/save'
+    | '/admin/api/set-published'
     | '/admin/api/upload'
     | '/admin/p/$id'
   fileRoutesByTo: FileRoutesByTo
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin/api/create-page'
     | '/admin/api/save'
+    | '/admin/api/set-published'
     | '/admin/api/upload'
     | '/admin/p/$id'
   id:
@@ -119,6 +130,7 @@ export interface FileRouteTypes {
     | '/admin/'
     | '/admin/api/create-page'
     | '/admin/api/save'
+    | '/admin/api/set-published'
     | '/admin/api/upload'
     | '/admin/p/$id'
   fileRoutesById: FileRoutesById
@@ -130,6 +142,7 @@ export interface RootRouteChildren {
   AdminIndexRoute: typeof AdminIndexRoute
   AdminApiCreatePageRoute: typeof AdminApiCreatePageRoute
   AdminApiSaveRoute: typeof AdminApiSaveRoute
+  AdminApiSetPublishedRoute: typeof AdminApiSetPublishedRoute
   AdminApiUploadRoute: typeof AdminApiUploadRoute
   AdminPIdRoute: typeof AdminPIdRoute
 }
@@ -178,6 +191,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminApiUploadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/api/set-published': {
+      id: '/admin/api/set-published'
+      path: '/admin/api/set-published'
+      fullPath: '/admin/api/set-published'
+      preLoaderRoute: typeof AdminApiSetPublishedRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/api/save': {
       id: '/admin/api/save'
       path: '/admin/api/save'
@@ -202,6 +222,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminIndexRoute: AdminIndexRoute,
   AdminApiCreatePageRoute: AdminApiCreatePageRoute,
   AdminApiSaveRoute: AdminApiSaveRoute,
+  AdminApiSetPublishedRoute: AdminApiSetPublishedRoute,
   AdminApiUploadRoute: AdminApiUploadRoute,
   AdminPIdRoute: AdminPIdRoute,
 }

@@ -40,6 +40,15 @@ export function createPage(input: CreatePageInput): Promise<{ id: string }> {
   return postJson("/admin/api/create-page", input).then((r) => unwrap<{ id: string }>(r));
 }
 
+export function setPublished(
+  pageId: string,
+  published: boolean,
+): Promise<{ published: boolean }> {
+  return postJson("/admin/api/set-published", { pageId, published }).then((r) =>
+    unwrap<{ published: boolean }>(r),
+  );
+}
+
 export function uploadImage(file: File): Promise<UploadResult> {
   const form = new FormData();
   form.append("file", file);
