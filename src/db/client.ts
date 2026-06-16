@@ -53,6 +53,19 @@ export async function insertPage(
     .run();
 }
 
+/** Flip a page's public visibility. `published` is 0|1 (SQLite has no bool). */
+export async function setPagePublished(
+  db: D1Database,
+  id: string,
+  published: 0 | 1,
+  updatedAt: number,
+): Promise<void> {
+  await db
+    .prepare("UPDATE pages SET published = ?, updated_at = ? WHERE id = ?")
+    .bind(published, updatedAt, id)
+    .run();
+}
+
 export async function getImageById(
   db: D1Database,
   id: string,

@@ -5,7 +5,7 @@ import {
   useRouter,
 } from "@tanstack/react-router";
 import { useState } from "react";
-import { createPage } from "../../lib/admin-api";
+import { createPage, setPublished } from "../../lib/admin-api";
 import { slugify } from "../../lib/slug";
 import { buildTree, type TreeNode } from "../../lib/tree";
 import { loadAllPages } from "../../server/pages";
@@ -27,6 +27,24 @@ function AdminIndex() {
   const [parentId, setParentId] = useState("");
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<Set<string>>(new Set());
+
+  const toggle = async (id: string, next: boolean) => {
+    setError(null);
+    setPending((prev) => new Set(prev).add(id));
+    try {
+      await setPublished(id, next);
+      await router.invalidate();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not update visibility");
+    } finally {
+      setPending((prev) => {
+        const copy = new Set(prev);
+        copy.delete(id);
+        return copy;
+      });
+    }
+  };
 
   const onTitle = (value: string) => {
     setTitle(value);
@@ -62,7 +80,7 @@ function AdminIndex() {
           <span className="text-hazard">▚</span>&nbsp;&nbsp;NO PAGES — CREATE ONE BELOW.
         </p>
       ) : (
-        <PageTree nodes={tree} />
+        <PageTree nodes={tree} pending={pending} onToggle={toggle} />
       )}
 
       <form onSubmit={submit} className="mt-12 space-y-4 border-2 border-ink p-5">
@@ -117,26 +135,56 @@ function AdminIndex() {
   );
 }
 
-function PageTree({ nodes }: { nodes: TreeNode[] }) {
+interface PageTreeProps {
+  nodes: TreeNode[];
+  pending: Set<string>;
+  onToggle: (id: string, next: boolean) => void;
+}
+
+function PageTree({ nodes, pending, onToggle }: PageTreeProps) {
   return (
     <ul className="border-t-2 border-ink">
-      {nodes.map((node) => (
-        <li key={node.page.id}>
-          <Link
-            to="/admin/p/$id"
-            params={{ id: node.page.id }}
-            className="lk flex items-baseline justify-between gap-3 border-b border-ink px-1 py-3 hover:bg-paper-2"
-          >
-            <span className="mono text-sm uppercase tracking-wide">{node.page.title}</span>
-            <span className="mono text-[10px] text-ink-soft">/p/{node.page.slug}&nbsp;→</span>
-          </Link>
-          {node.children.length > 0 && (
-            <div className="ml-4 border-l-2 border-hazard pl-3">
-              <PageTree nodes={node.children} />
+      {nodes.map((node) => {
+        const live = node.page.published === 1;
+        const busy = pending.has(node.page.id);
+        return (
+          <li key={node.page.id}>
+            <div className="flex items-baseline gap-3 border-b border-ink px-1 py-3 hover:bg-paper-2">
+              <Link
+                to="/admin/p/$id"
+                params={{ id: node.page.id }}
+                className="lk flex flex-1 items-baseline justify-between gap-3"
+              >
+                <span
+                  className={`mono text-sm uppercase tracking-wide ${live ? "" : "text-ink-soft line-through"}`}
+                >
+                  {node.page.title}
+                </span>
+                <span className="mono text-[10px] text-ink-soft">/p/{node.page.slug}&nbsp;→</span>
+              </Link>
+              <button
+                type="button"
+                onClick={() => onToggle(node.page.id, !live)}
+                disabled={busy}
+                aria-pressed={live}
+                title={live ? "Live — click to hide" : "Hidden — click to publish"}
+                className={`mono shrink-0 border-2 px-2 py-1 text-[10px] uppercase tracking-wider transition-colors disabled:opacity-30 ${
+                  live
+                    ? "border-ink bg-ink text-paper enabled:hover:bg-hazard enabled:hover:border-hazard"
+                    : "border-ink text-ink-soft enabled:hover:border-hazard enabled:hover:text-hazard"
+                }`}
+              >
+                {busy ? "…" : live ? "● Live" : "○ Hidden"}
+              </button>
             </div>
-          )}
-        </li>
-      ))}
+            {node.children.length > 0 && (
+              <div className="ml-4 border-l-2 border-hazard pl-3">
+                <PageTree nodes={node.children} pending={pending} onToggle={onToggle} />
+              </div>
+            )}
+          </li>
+        );
+      })}
     </ul>
   );
 }

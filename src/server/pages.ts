@@ -7,6 +7,7 @@ import {
   insertPage,
   listBlocks,
   listPages,
+  setPagePublished,
 } from "../db/client";
 import { rowToBlock } from "../lib/map";
 import { isValidSlug } from "../lib/slug";
@@ -41,7 +42,8 @@ export const loadPageBySlug = createServerFn({ method: "GET" })
   .handler(async ({ data: slug }): Promise<PageData | null> => {
     const db = getDb();
     const page = await getPageBySlug(db, slug);
-    return page ? pageWithBlocks(db, page) : null;
+    // Unpublished pages are private — invisible to the public even by direct URL.
+    return page && page.published === 1 ? pageWithBlocks(db, page) : null;
   });
 
 /** Load a page by id for the admin editor (gated by Cloudflare Access in prod). */
@@ -92,4 +94,35 @@ export async function applyCreatePage(
     updated_at: now,
   });
   return { id };
+}
+
+export interface SetPublishedInput {
+  pageId: string;
+  published: boolean;
+}
+
+// Toggling visibility is a mutation: its HTTP entry point is the Access-gated
+// POST /admin/api/set-published route. Validation + update live here.
+export function validateSetPublishedInput(data: SetPublishedInput): {
+  pageId: string;
+  published: 0 | 1;
+} {
+  const pageId = typeof data?.pageId === "string" ? data.pageId : "";
+  if (!pageId) throw new Error("pageId is required");
+  if (typeof data?.published !== "boolean") {
+    throw new Error("published must be a boolean");
+  }
+  return { pageId, published: data.published ? 1 : 0 };
+}
+
+export async function applySetPublished(
+  db: D1Database,
+  data: SetPublishedInput,
+): Promise<{ published: boolean }> {
+  const { pageId, published } = validateSetPublishedInput(data);
+  if (!(await getPageById(db, pageId))) {
+    throw new Error("Page not found");
+  }
+  await setPagePublished(db, pageId, published, Date.now());
+  return { published: published === 1 };
 }
